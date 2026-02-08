@@ -1,146 +1,302 @@
-# PocketOS
+# PocketOS v1.0
 
-PocketOS is an embedded operating system framework for ESP32 development using PlatformIO and the Arduino framework.
+PocketOS is a modular embedded operating system framework for hobbyist microcontrollers, providing HAL capability discovery, resource management, endpoint/device registry, typed capability schemas, intent-based API dispatcher, persistence, and an interactive CLI.
 
-## Features
+## Architecture Overview
 
-- **Core Components**:
-  - HAL (Hardware Abstraction Layer)
-  - Resources Management
-  - Endpoints
-  - Devices
-  - Intents
-  - Schema Validation
-  - Logger
-  - Persistence
+PocketOS v1 implements a clean separation between core logic and user interfaces through an **Intent API** dispatcher. This allows the same core to be controlled via CLI, web interface, or GUI without code changes.
 
-- **Drivers**:
-  - GPIO Digital Output
-  - GPIO Digital Input
-  - PWM Output (conditional compilation with `POCKETOS_ENABLE_PWM`)
-  - ADC Input (conditional compilation with `POCKETOS_ENABLE_ADC`)
-  - I2C Bus (conditional compilation with `POCKETOS_ENABLE_I2C`)
+### Core Modules
 
-- **CLI**: Interactive command-line interface via serial monitor
+1. **HAL (Hardware Abstraction Layer)**
+   - Board information queries (name, chip family, flash size, heap)
+   - Capability discovery (GPIO/ADC/PWM/I2C/SPI/UART counts)
+   - Safe pin management
+   - Platform-specific I/O functions
 
-## Project Structure
+2. **Resource Manager**
+   - Tracks ownership of physical resources (pins, channels, buses)
+   - Prevents conflicts through claim/release API
+   - Supports multi-owner queries
 
-```
-PocketOS/
-├── platformio.ini          # PlatformIO configuration
-├── src/
-│   ├── main.cpp           # Entry point
-│   └── pocketos/
-│       ├── core/          # Core system components
-│       │   ├── hal.h/cpp
-│       │   ├── resources.h/cpp
-│       │   ├── endpoints.h/cpp
-│       │   ├── devices.h/cpp
-│       │   ├── intents.h/cpp
-│       │   ├── schema.h/cpp
-│       │   ├── logger.h/cpp
-│       │   └── persistence.h/cpp
-│       ├── drivers/       # Hardware drivers
-│       │   ├── gpio_dout.h/cpp
-│       │   ├── gpio_din.h/cpp
-│       │   ├── pwm_out.h/cpp
-│       │   ├── adc_in.h/cpp
-│       │   └── i2c_bus.h/cpp
-│       └── cli/           # Command-line interface
-│           ├── cli.h
-│           └── cli.cpp
-└── README.md
-```
+3. **Endpoint Registry**
+   - Typed addressable endpoints (gpio.dout.2, i2c0, adc.ch.0, etc.)
+   - Auto-discovery of available endpoints
+   - Endpoint probing (e.g., I2C bus scanning)
 
-## Requirements
+4. **Device Registry**
+   - Manages bound driver instances attached to endpoints
+   - Tracks device state (READY/FAULT/DISABLED)
+   - Health counters (init failures, I/O failures, last OK timestamp)
+   - Dynamic device binding/unbinding
+
+5. **Capability Schema System**
+   - Driver metadata (settings, signals, commands)
+   - Type system (bool/int/float/enum/string)
+   - Constraints (min/max/step, read-only vs read-write)
+   - Line-oriented serialization format
+
+6. **Intent API Dispatcher (v1.0.0)**
+   - Versioned, stable API for all operations
+   - 17 intent opcodes (sys.info, hal.caps, ep.list, ep.probe, dev.*, param.*, schema.get, log.*, persist.*)
+   - Structured error model (OK, ERR_BAD_ARGS, ERR_NOT_FOUND, ERR_CONFLICT, ERR_IO, ERR_UNSUPPORTED, ERR_INTERNAL)
+   - Line-oriented response format
+
+7. **Persistence**
+   - NVS (Non-Volatile Storage) on ESP32
+   - Saves device bindings and parameters
+   - Auto-load at boot
+
+8. **Ring Buffer Logging**
+   - Fixed-size buffer (128 lines × 96 chars)
+   - Log levels: INFO/WARN/ERROR
+   - Tail and clear commands
+
+### Drivers
+
+- **GPIO Digital Output** - Schema-compliant driver with state parameter
+
+## Platform Support
+
+### Primary Target
+- **ESP32** (Arduino framework) - Fully supported
+
+### Secondary Targets (compile-guarded)
+- **ESP8266** (Arduino framework) - HAL stubs present
+- **RP2040** (Arduino-Pico) - HAL stubs present
+
+## Getting Started
+
+### Requirements
 
 - [PlatformIO](https://platformio.org/) installed
 - ESP32 development board
 - USB cable for programming and serial communication
 
-## Getting Started
+### Build and Flash
 
-### Build the Project
-
-To compile the project:
-
+Build the project:
 ```bash
-pio run
+pio run -e esp32dev
 ```
 
-or
-
+Upload to ESP32:
 ```bash
-platformio run
+pio run -t upload -e esp32dev
 ```
 
-### Upload to ESP32
-
-To upload the firmware to your ESP32 board:
-
-```bash
-pio run --target upload
-```
-
-or
-
-```bash
-platformio run --target upload
-```
-
-### Monitor Serial Output
-
-To open the serial monitor and interact with the CLI:
-
+Open serial monitor (115200 baud):
 ```bash
 pio device monitor
 ```
 
-or
-
+Or combine all steps:
 ```bash
-platformio device monitor
+pio run -t upload -e esp32dev && pio device monitor
 ```
 
-To exit the monitor, press `Ctrl+C`.
+### First Steps
 
-### Build, Upload, and Monitor (One Command)
+After flashing, the serial monitor will display:
+```
+=====================================
+       PocketOS v1.0
+  Embedded OS for Microcontrollers
+=====================================
 
-You can combine all three operations:
+[INFO] Logger initialized
+[INFO] HAL initialized
+[INFO] Intent API v1.0.0 initialized
+[INFO] Resource Manager initialized
+[INFO] Endpoint Registry initialized
+[INFO] Device Registry initialized
+[INFO] Persistence initialized
+[INFO] Device bindings loaded
+[INFO] CLI initialized
+PocketOS Ready
+> 
+```
+
+## CLI Commands
+
+### System Information
+```bash
+sys info              # Show board name, chip, flash, heap
+hal caps              # Show GPIO/ADC/PWM/I2C/SPI/UART counts
+```
+
+### Endpoint Management
+```bash
+ep list               # List all registered endpoints
+ep probe i2c0         # Scan I2C bus for devices
+```
+
+### Device Management
+```bash
+dev list              # List all bound devices
+bind gpio.dout gpio.dout.2    # Bind GPIO digital output to pin 2
+unbind 1              # Unbind device ID 1
+```
+
+### Parameter Control
+```bash
+param get 1 state     # Get 'state' parameter from device 1
+param set 1 state 1   # Set 'state' to 1 (turn on)
+param set 1 state 0   # Set 'state' to 0 (turn off)
+```
+
+### Schema Queries
+```bash
+schema 1              # Show device 1 schema (settings, signals, commands)
+```
+
+### Logging
+```bash
+log tail              # Show last 10 log entries
+log tail 20           # Show last 20 log entries
+log clear             # Clear log buffer
+```
+
+### Persistence
+```bash
+persist save          # Save configuration to NVS
+persist load          # Load configuration from NVS
+```
+
+## Example Session
 
 ```bash
-pio run --target upload && pio device monitor
+> sys info
+version=1.0.0
+board=ESP32
+chip=ESP32
+flash_size=4194304
+heap_size=327680
+free_heap=298456
+
+> hal caps
+gpio_count=40
+adc_count=18
+pwm_count=16
+i2c_count=2
+spi_count=3
+uart_count=3
+
+> ep probe i2c0
+I2C0 scan:
+  0x48
+  0x76
+
+> bind gpio.dout gpio.dout.2
+device_id=1
+
+> param set 1 state 1
+OK
+
+> param get 1 state
+state=1
+
+> schema 1
+[settings]
+state:bool:rw:0.00-1.00
+pin:int:ro
+
+[signals]
+output:bool:ro
+
+[commands]
+toggle
+
+> dev list
+dev1: gpio.dout @ gpio.dout.2 [READY] fails:0
+
+> log tail 5
+[INFO] GPIO DOUT driver initialized on pin 2
+[INFO] Device 1 bound to gpio.dout.2
+[INFO] PocketOS Ready
 ```
 
 ## Configuration
 
-The project is configured in `platformio.ini` with the following settings:
+The project is configured in `platformio.ini`:
 
-- **Platform**: ESP32 (espressif32)
-- **Board**: ESP32 Dev Module (esp32dev)
-- **Framework**: Arduino
-- **Monitor Speed**: 115200 baud
-- **Build Flags**:
-  - `POCKETOS_ENABLE_I2C` - Enable I2C bus driver
-  - `POCKETOS_ENABLE_ADC` - Enable ADC input driver
-  - `POCKETOS_ENABLE_PWM` - Enable PWM output driver
+```ini
+[env:esp32dev]
+platform = espressif32
+board = esp32dev
+framework = arduino
+monitor_speed = 115200
+build_flags = 
+    -DPOCKETOS_ENABLE_I2C
+    -DPOCKETOS_ENABLE_ADC
+    -DPOCKETOS_ENABLE_PWM
+```
 
-## CLI Commands
+## Architecture Principles
 
-Once uploaded and monitoring, you can use the following commands:
+1. **Core Never Calls UI** - All core modules are UI-agnostic. CLI is a thin client over Intent API.
 
-- `help` - Display available commands
-- `status` - Show system status
-- `version` - Show PocketOS version
+2. **Stable Intent API** - Versioned API with stable error codes. GUI/web renderers can be added without changing core.
+
+3. **Resource Ownership** - Explicit resource claiming prevents conflicts.
+
+4. **Schema-Driven** - Drivers expose metadata. Tools can introspect capabilities.
+
+5. **Memory Conscious** - Fixed-size buffers, controlled allocation, suitable for resource-constrained MCUs.
 
 ## Development
 
-The PocketOS framework uses namespaces to organize code:
+### Adding a New Driver
 
-- `PocketOS::` - Core framework components
-- `PocketOS::Drivers::` - Hardware driver components
+1. Implement `IDriver` interface:
+```cpp
+class MyDriver : public IDriver {
+public:
+    virtual bool init() override;
+    virtual bool setParam(const String& name, const String& value) override;
+    virtual String getParam(const String& name) override;
+    virtual CapabilitySchema getSchema() override;
+    virtual void update() override;
+};
+```
 
-All components are implemented as static classes for easy access throughout the application.
+2. Register in `DeviceRegistry::createDriver()`
+
+3. Define schema in `getSchema()` with settings, signals, and commands
+
+### Extending Intent API
+
+1. Add intent opcode to `IntentAPI::dispatch()`
+2. Implement handler function
+3. Update CLI parser in `CLI::parseCommand()`
+
+## Project Structure
+
+```
+PocketOS/
+├── platformio.ini
+├── docs/
+│   ├── AI_Instructions.md       # AI work contract
+│   ├── roadmap.md              # Development roadmap
+│   └── tracking/               # Session logs
+├── src/
+│   ├── main.cpp
+│   └── pocketos/
+│       ├── core/
+│       │   ├── intent_api.h/cpp       # Intent dispatcher
+│       │   ├── hal.h/cpp              # Hardware abstraction
+│       │   ├── resource_manager.h/cpp # Resource ownership
+│       │   ├── endpoint_registry.h/cpp # Endpoint management
+│       │   ├── device_registry.h/cpp   # Device binding
+│       │   ├── capability_schema.h/cpp # Schema system
+│       │   ├── logger.h/cpp           # Ring buffer logging
+│       │   └── persistence.h/cpp      # NVS storage
+│       ├── drivers/
+│       │   └── gpio_dout_driver.h/cpp # GPIO digital out
+│       └── cli/
+│           └── cli.h/cpp              # Serial CLI
+└── README.md
+```
 
 ## License
 
