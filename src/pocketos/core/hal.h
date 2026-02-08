@@ -48,10 +48,11 @@ public:
     static void pwmWritePercent(int channel, float percent);
     
     // I2C functions
-    static bool i2cInit(int busNum, int sda = -1, int scl = -1);
+    static bool i2cInit(int busNum, int sda = -1, int scl = -1, uint32_t speedHz = 100000);
     static bool i2cProbe(int busNum, uint8_t address);
     static bool i2cWrite(int busNum, uint8_t address, uint8_t* data, size_t len);
     static bool i2cRead(int busNum, uint8_t address, uint8_t* data, size_t len);
+    static bool i2cScan(int busNum, uint8_t* addresses, int* count, int maxCount = 128);
     
 private:
     static bool initialized;

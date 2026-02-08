@@ -93,6 +93,9 @@ public:
     static IntentResponse handleBusList(const IntentRequest& req);
     static IntentResponse handleBusInfo(const IntentRequest& req);
     static IntentResponse handleBusConfig(const IntentRequest& req);
+    static IntentResponse handleIdentify(const IntentRequest& req);
+    static IntentResponse handleDeviceRead(const IntentRequest& req);
+    static IntentResponse handleDeviceStream(const IntentRequest& req);
     
 private:
     static bool initialized;

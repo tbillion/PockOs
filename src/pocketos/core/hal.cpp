@@ -255,19 +255,22 @@ void HAL::pwmWritePercent(int channel, float percent) {
     #endif
 }
 
-bool HAL::i2cInit(int busNum, int sda, int scl) {
+bool HAL::i2cInit(int busNum, int sda, int scl, uint32_t speedHz) {
     #ifdef POCKETOS_ENABLE_I2C
     #ifdef ESP32
     if (busNum == 0) {
         if (sda < 0) sda = 21;
         if (scl < 0) scl = 22;
-        Wire.begin(sda, scl);
+        Wire.begin(sda, scl, speedHz);
+        Logger::info("I2C initialized: SDA=" + String(sda) + ", SCL=" + String(scl) + ", Speed=" + String(speedHz) + "Hz");
         return true;
     }
     #elif defined(ESP8266)
     if (sda < 0) sda = 4;
     if (scl < 0) scl = 5;
     Wire.begin(sda, scl);
+    Wire.setClock(speedHz);
+    Logger::info("I2C initialized: SDA=" + String(sda) + ", SCL=" + String(scl) + ", Speed=" + String(speedHz) + "Hz");
     return true;
     #endif
     #endif
@@ -301,6 +304,21 @@ bool HAL::i2cRead(int busNum, uint8_t address, uint8_t* data, size_t len) {
         data[i++] = Wire.read();
     }
     return i == len;
+    #else
+    return false;
+    #endif
+}
+
+bool HAL::i2cScan(int busNum, uint8_t* addresses, int* count, int maxCount) {
+    #ifdef POCKETOS_ENABLE_I2C
+    *count = 0;
+    for (uint8_t addr = 1; addr < 127 && *count < maxCount; addr++) {
+        Wire.beginTransmission(addr);
+        if (Wire.endTransmission() == 0) {
+            addresses[(*count)++] = addr;
+        }
+    }
+    return true;
     #else
     return false;
     #endif

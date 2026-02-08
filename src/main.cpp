@@ -6,6 +6,7 @@
 #include "pocketos/core/endpoint_registry.h"
 #include "pocketos/core/device_registry.h"
 #include "pocketos/core/persistence.h"
+#include "pocketos/core/device_identifier.h"
 #include "pocketos/cli/cli.h"
 
 void setup() {
@@ -19,6 +20,7 @@ void setup() {
     PocketOS::ResourceManager::init();
     PocketOS::EndpointRegistry::init();
     PocketOS::DeviceRegistry::init();
+    PocketOS::DeviceIdentifier::init();
     PocketOS::Persistence::init();
     
     // Load saved configuration

@@ -5,6 +5,8 @@
 #include "endpoint_registry.h"
 #include "device_registry.h"
 #include "persistence.h"
+#include "device_identifier.h"
+#include "../drivers/bme280_driver.h"
 
 namespace PocketOS {
 
@@ -62,6 +64,12 @@ IntentResponse IntentAPI::dispatch(const IntentRequest& request) {
         return handleBusInfo(request);
     } else if (request.intent == "bus.config") {
         return handleBusConfig(request);
+    } else if (request.intent == "identify") {
+        return handleIdentify(request);
+    } else if (request.intent == "dev.read") {
+        return handleDeviceRead(request);
+    } else if (request.intent == "dev.stream") {
+        return handleDeviceStream(request);
     }
     
     return IntentResponse(IntentError::ERR_NOT_FOUND, "Unknown intent");
@@ -347,12 +355,182 @@ IntentResponse IntentAPI::handleBusInfo(const IntentRequest& req) {
 
 IntentResponse IntentAPI::handleBusConfig(const IntentRequest& req) {
     if (req.argCount < 1) {
-        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: bus.config <bus_name> [params...]");
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: bus.config <bus_name> [param=value...]");
     }
     
-    // Bus configuration is a placeholder for future implementation
-    // Would configure I2C frequency, SPI mode, UART baud rate, etc.
-    return IntentResponse(IntentError::ERR_UNSUPPORTED, "Bus configuration not yet implemented");
+    String busName = req.args[0];
+    
+    if (busName == "i2c0") {
+        // Parse I2C configuration parameters
+        int sda = -1, scl = -1;
+        uint32_t speedHz = 100000;  // Default 100kHz
+        
+        for (int i = 1; i < req.argCount; i++) {
+            String param = req.args[i];
+            int eqPos = param.indexOf('=');
+            if (eqPos > 0) {
+                String key = param.substring(0, eqPos);
+                String value = param.substring(eqPos + 1);
+                
+                if (key == "sda") {
+                    sda = value.toInt();
+                } else if (key == "scl") {
+                    scl = value.toInt();
+                } else if (key == "speed_hz" || key == "speed") {
+                    speedHz = value.toInt();
+                }
+            }
+        }
+        
+        if (HAL::i2cInit(0, sda, scl, speedHz)) {
+            IntentResponse resp;
+            resp.data = "bus=i2c0\n";
+            resp.data += "sda=" + String(sda < 0 ? 21 : sda) + "\n";
+            resp.data += "scl=" + String(scl < 0 ? 22 : scl) + "\n";
+            resp.data += "speed_hz=" + String(speedHz) + "\n";
+            resp.data += "status=configured\n";
+            return resp;
+        } else {
+            return IntentResponse(IntentError::ERR_IO, "Failed to configure I2C bus");
+        }
+    }
+    
+    return IntentResponse(IntentError::ERR_NOT_FOUND, "Unknown bus: " + busName);
+}
+
+IntentResponse IntentAPI::handleIdentify(const IntentRequest& req) {
+    if (req.argCount < 1) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: identify <endpoint>");
+    }
+    
+    String endpoint = req.args[0];
+    DeviceIdentification id = DeviceIdentifier::identifyEndpoint(endpoint);
+    
+    IntentResponse resp;
+    resp.data = "endpoint=" + endpoint + "\n";
+    resp.data += "identified=" + String(id.identified ? "true" : "false") + "\n";
+    resp.data += "device_class=" + id.deviceClass + "\n";
+    resp.data += "confidence=" + id.confidence + "\n";
+    if (id.details.length() > 0) {
+        resp.data += "details=" + id.details + "\n";
+    }
+    
+    return resp;
+}
+
+IntentResponse IntentAPI::handleDeviceRead(const IntentRequest& req) {
+    if (req.argCount < 1) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: dev.read <device_id>");
+    }
+    
+    int deviceId = req.args[0].toInt();
+    Device* device = DeviceRegistry::getDevice(deviceId);
+    
+    if (!device || !device->active) {
+        return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
+    }
+    
+    // Check if device is a BME280
+    if (device->driverId == "bme280") {
+        // Get the driver instance (in a real implementation, we'd store driver instances)
+        // For now, create a temporary driver to read
+        BME280Driver driver;
+        
+        // Parse I2C address from endpoint (e.g., "i2c0:0x76")
+        String endpoint = device->endpointRef;
+        int colonPos = endpoint.indexOf(':');
+        if (colonPos > 0) {
+            String addrStr = endpoint.substring(colonPos + 1);
+            uint8_t address = (uint8_t)strtol(addrStr.c_str(), nullptr, 16);
+            
+            if (driver.init(address)) {
+                BME280Data data = driver.readData();
+                driver.deinit();
+                
+                if (data.valid) {
+                    IntentResponse resp;
+                    resp.data = "device_id=" + String(deviceId) + "\n";
+                    resp.data += "driver=" + device->driverId + "\n";
+                    resp.data += "temperature=" + String(data.temperature, 2) + "\n";
+                    resp.data += "humidity=" + String(data.humidity, 2) + "\n";
+                    resp.data += "pressure=" + String(data.pressure, 2) + "\n";
+                    resp.data += "temp_unit=°C\n";
+                    resp.data += "hum_unit=%RH\n";
+                    resp.data += "press_unit=hPa\n";
+                    return resp;
+                } else {
+                    return IntentResponse(IntentError::ERR_IO, "Failed to read sensor data");
+                }
+            } else {
+                return IntentResponse(IntentError::ERR_IO, "Failed to initialize driver");
+            }
+        }
+    }
+    
+    return IntentResponse(IntentError::ERR_UNSUPPORTED, "Device driver does not support read operation");
+}
+
+IntentResponse IntentAPI::handleDeviceStream(const IntentRequest& req) {
+    if (req.argCount < 3) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: dev.stream <device_id> <interval_ms> <count>");
+    }
+    
+    int deviceId = req.args[0].toInt();
+    int intervalMs = req.args[1].toInt();
+    int count = req.args[2].toInt();
+    
+    if (intervalMs < 100) intervalMs = 100;  // Minimum 100ms
+    if (count < 1 || count > 100) count = 10;  // Limit to reasonable range
+    
+    Device* device = DeviceRegistry::getDevice(deviceId);
+    
+    if (!device || !device->active) {
+        return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
+    }
+    
+    // Check if device is a BME280
+    if (device->driverId == "bme280") {
+        String endpoint = device->endpointRef;
+        int colonPos = endpoint.indexOf(':');
+        if (colonPos > 0) {
+            String addrStr = endpoint.substring(colonPos + 1);
+            uint8_t address = (uint8_t)strtol(addrStr.c_str(), nullptr, 16);
+            
+            BME280Driver driver;
+            if (driver.init(address)) {
+                IntentResponse resp;
+                resp.data = "device_id=" + String(deviceId) + "\n";
+                resp.data += "interval_ms=" + String(intervalMs) + "\n";
+                resp.data += "count=" + String(count) + "\n";
+                resp.data += "streaming=start\n";
+                
+                // Perform the streaming reads
+                for (int i = 0; i < count; i++) {
+                    BME280Data data = driver.readData();
+                    if (data.valid) {
+                        resp.data += "sample=" + String(i + 1) + " ";
+                        resp.data += "temp=" + String(data.temperature, 2) + "°C ";
+                        resp.data += "hum=" + String(data.humidity, 1) + "%RH ";
+                        resp.data += "press=" + String(data.pressure, 1) + "hPa\n";
+                    } else {
+                        resp.data += "sample=" + String(i + 1) + " ERROR\n";
+                    }
+                    
+                    if (i < count - 1) {
+                        delay(intervalMs);
+                    }
+                }
+                
+                resp.data += "streaming=complete\n";
+                driver.deinit();
+                return resp;
+            } else {
+                return IntentResponse(IntentError::ERR_IO, "Failed to initialize driver");
+            }
+        }
+    }
+    
+    return IntentResponse(IntentError::ERR_UNSUPPORTED, "Device driver does not support stream operation");
 }
 
 } // namespace PocketOS

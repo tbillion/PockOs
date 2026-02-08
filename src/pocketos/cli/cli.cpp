@@ -183,9 +183,26 @@ void CLI::parseCommand(const String& cmdLine, IntentRequest& request) {
             } else if (tokens[1] == "config" && tokenCount > 2) {
                 request.intent = "bus.config";
                 request.args[0] = tokens[2];
-                request.argCount = 1;
+                // Pass all remaining tokens as args
+                for (int i = 3; i < tokenCount && request.argCount < MAX_INTENT_ARGS - 1; i++) {
+                    request.args[request.argCount++] = tokens[i];
+                }
             }
         }
+    } else if (cmd == "identify" && tokenCount > 1) {
+        request.intent = "identify";
+        request.args[0] = tokens[1];
+        request.argCount = 1;
+    } else if (cmd == "read" && tokenCount > 1) {
+        request.intent = "dev.read";
+        request.args[0] = tokens[1];
+        request.argCount = 1;
+    } else if (cmd == "stream" && tokenCount > 3) {
+        request.intent = "dev.stream";
+        request.args[0] = tokens[1];  // device_id
+        request.args[1] = tokens[2];  // interval
+        request.args[2] = tokens[3];  // count
+        request.argCount = 3;
     }
 }
 
@@ -218,17 +235,24 @@ void CLI::printHelp() {
     Serial.println("Bus Management:");
     Serial.println("  bus list                       - List available buses");
     Serial.println("  bus info <bus>                 - Bus information (e.g., bus info i2c0)");
-    Serial.println("  bus config <bus> [params]      - Configure bus (future)");
+    Serial.println("  bus config <bus> [params]      - Configure bus (e.g., bus config i2c0 sda=21 scl=22 speed_hz=400000)");
     Serial.println();
     Serial.println("Endpoints:");
     Serial.println("  ep list                        - List endpoints");
-    Serial.println("  ep probe <endpoint>            - Probe endpoint (e.g., i2c0)");
+    Serial.println("  ep probe <endpoint>            - Probe endpoint (e.g., ep probe i2c0)");
+    Serial.println();
+    Serial.println("Device Identification:");
+    Serial.println("  identify <endpoint>            - Identify device at endpoint (e.g., identify i2c0:0x76)");
     Serial.println();
     Serial.println("Device Management:");
     Serial.println("  dev list                       - List devices");
-    Serial.println("  bind <driver> <endpoint>       - Bind device (e.g., bind gpio.dout gpio.dout.2)");
+    Serial.println("  bind <driver> <endpoint>       - Bind device (e.g., bind bme280 i2c0:0x76)");
     Serial.println("  unbind <device_id>             - Unbind device");
     Serial.println("  status <device_id>             - Device status and health");
+    Serial.println();
+    Serial.println("Device Operations:");
+    Serial.println("  read <device_id>               - Read current sensor data");
+    Serial.println("  stream <device_id> <interval_ms> <count> - Stream sensor data");
     Serial.println();
     Serial.println("Device Configuration:");
     Serial.println("  schema <device_id>             - Show device schema");
