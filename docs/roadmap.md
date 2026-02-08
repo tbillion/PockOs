@@ -683,3 +683,120 @@ D) Docs:
 
 **Session complete:** Universal Core v1 fully implemented. All 6 segments complete. All requirements met. Documentation comprehensive. Code production-ready. Hardware testing pending.
 
+
+---
+
+## 2026-02-08 22:47 — Zero-Stub Universal Portability Planning
+
+**What was done:**
+- Created comprehensive implementation plan for zero-stub portability across 3 platforms
+- Analyzed current architecture and identified all stub code
+- Designed transport layer architecture (I2C, SPI, UART, OneWire)
+- Documented complete platform pack requirements for ESP32, ESP8266, and RP2040
+- Created directory structure: src/pocketos/platform/ and src/pocketos/transport/
+- Estimated ~4,650 lines of code across 40+ new files
+- Created ZERO_STUB_PORTABILITY_PLAN.md (21,858 bytes) with detailed implementation guide
+- Risk assessment and testing strategy documented
+- Timeline: 2-3 weeks with proper hardware testing
+
+**What remains:**
+
+**Phase 2: Platform Pack Implementation** (~1,800 lines)
+- ESP32 platform pack enhancement (real safe pins, ADC/PWM mapping, capabilities)
+- ESP8266 platform pack (complete, NO STUBS) with LittleFS storage
+- RP2040 platform pack (complete, NO STUBS) with LittleFS storage
+- Accurate capability detection per platform
+- Reboot/watchdog hooks per platform
+
+**Phase 3: I2C Transport Layer** (~300 lines)
+- I2CMaster interface definition
+- ESP32 I2C Master implementation (Wire library wrapper)
+- ESP8266 I2C Master implementation
+- RP2040 I2C Master implementation
+- I2C Slave where supported (ESP32, RP2040 only)
+
+**Phase 4: SPI Transport Layer** (~450 lines)
+- SPIMaster interface definition
+- ESP32 SPI Master implementation
+- ESP8266 SPI Master implementation
+- RP2040 SPI Master implementation
+
+**Phase 5: UART Transport Layer** (~360 lines)
+- UARTPort interface definition
+- ESP32 UART implementation (3 ports)
+- ESP8266 UART implementation (2 ports)
+- RP2040 UART implementation (2 ports)
+
+**Phase 6: OneWire Transport Layer** (~450 lines)
+- OneWireBus interface definition
+- ESP32 OneWire implementation
+- ESP8266 OneWire implementation
+- RP2040 OneWire implementation
+
+**Phase 7: Integration** (~400 lines)
+- Update HAL to use transport layer instead of direct Wire/SPI
+- Update BME280 driver to use I2CMaster transport
+- Update Intent API for transport operations
+- Update main.cpp initialization
+
+**Phase 8: Build Configuration** (~80 lines)
+- Add d1_mini environment to platformio.ini (ESP8266)
+- Add pico environment to platformio.ini (RP2040, Earle Philhower core)
+- Library dependencies per platform
+- Build flags per platform
+- Test compilation for all 3 targets
+
+**Phase 9: CI/CD** (~60 lines)
+- Create .github/workflows/build.yml
+- Build matrix for esp32dev, d1_mini, pico
+- Stub detection check (fail if STUB/TODO/NOT_IMPLEMENTED found)
+- Cache PlatformIO for faster builds
+
+**Phase 10: Documentation** (~750 lines)
+- docs/PORTABILITY.md (platform capability matrix, pin tables, limitations)
+- Update docs/PCF1_SPEC.md (target-aware validation section)
+- Complete session tracking
+- Update this roadmap
+
+**Blockers/Risks:**
+- **High Risk:** Multi-platform compatibility requires extensive testing with physical hardware
+- **Medium Risk:** LittleFS differences between ESP8266 and RP2040
+- **Medium Risk:** Pin conflicts and platform-specific restrictions
+- **Low Risk:** Build system complexity (well-understood)
+- **Environment:** Network restriction continues to block toolchain downloads in this environment
+
+**Build status:**
+- Planning phase only - no build attempted
+- Directory structure created: src/pocketos/platform/, src/pocketos/transport/
+- Comprehensive plan documented
+- Estimated 2-3 weeks for full implementation with hardware testing
+
+**Definition of Done - PLANNING COMPLETE:**
+1. ❌ PlatformIO builds for all 3 targets (pending implementation)
+2. ❌ No stub code in platform/transport (pending implementation)
+3. ❌ Platform Pack real for all targets (pending implementation)
+4. ❌ Transport surfaces real for all targets (pending implementation)
+5. ❌ Documentation updated (plan created, implementation pending)
+6. ❌ Config validation target-aware (pending implementation)
+
+**Planning Complete:**
+✅ Architecture designed
+✅ Implementation plan documented (21,858 bytes)
+✅ Directory structure created
+✅ Risk assessment complete
+✅ Testing strategy defined
+✅ Timeline estimated
+✅ Session tracking complete (10,798 bytes)
+✅ Roadmap updated (this entry)
+
+**Statistics:**
+- Documentation created: 32,656 bytes (plan + tracking + roadmap entry)
+- Directories created: 2 (platform, transport)
+- Implementation pending: ~4,650 lines of code across 40+ files
+- Platforms to support: ESP32, ESP8266, RP2040
+- Transport types: I2C, SPI, UART, OneWire
+- Time spent: ~2.25 hours (analysis + planning + documentation)
+
+**Next session should:** Begin Phase 2 (Platform Packs) and Phase 8 (Build Config) to establish build environments for all three platforms. Then proceed with transport layer implementations (Phases 3-6).
+
+**Session complete:** Comprehensive planning complete. Zero-stub universal portability is a major architectural enhancement requiring methodical implementation. The plan provides clear roadmap for successful execution. Implementation to begin in next session.
