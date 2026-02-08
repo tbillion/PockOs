@@ -9,7 +9,7 @@
 #include "pocketos/core/device_identifier.h"
 #include "pocketos/core/pcf1_config.h"
 #include "pocketos/core/service_manager.h"
-#include "pocketos/core/platform_pack.h"
+#include "pocketos/platform/platform_pack.h"
 #include "pocketos/cli/cli.h"
 
 // Global service instances
