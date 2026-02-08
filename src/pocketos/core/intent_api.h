@@ -96,6 +96,8 @@ public:
     static IntentResponse handleIdentify(const IntentRequest& req);
     static IntentResponse handleDeviceRead(const IntentRequest& req);
     static IntentResponse handleDeviceStream(const IntentRequest& req);
+    static IntentResponse handleFactoryReset(const IntentRequest& req);
+    static IntentResponse handleConfigValidate(const IntentRequest& req);
     
 private:
     static bool initialized;

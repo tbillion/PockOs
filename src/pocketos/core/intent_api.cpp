@@ -70,6 +70,10 @@ IntentResponse IntentAPI::dispatch(const IntentRequest& request) {
         return handleDeviceRead(request);
     } else if (request.intent == "dev.stream") {
         return handleDeviceStream(request);
+    } else if (request.intent == "factory_reset") {
+        return handleFactoryReset(request);
+    } else if (request.intent == "config.validate") {
+        return handleConfigValidate(request);
     }
     
     return IntentResponse(IntentError::ERR_NOT_FOUND, "Unknown intent");
@@ -531,6 +535,45 @@ IntentResponse IntentAPI::handleDeviceStream(const IntentRequest& req) {
     }
     
     return IntentResponse(IntentError::ERR_UNSUPPORTED, "Device driver does not support stream operation");
+}
+
+IntentResponse IntentAPI::handleFactoryReset(const IntentRequest& req) {
+    #include "pcf1_config.h"
+    
+    if (PCF1Config::factoryReset()) {
+        IntentResponse resp;
+        resp.data = "status=reset_complete\n";
+        resp.data += "message=All configuration cleared\n";
+        resp.message = "Factory reset complete";
+        return resp;
+    }
+    
+    return IntentResponse(IntentError::ERR_INTERNAL, "Factory reset failed");
+}
+
+IntentResponse IntentAPI::handleConfigValidate(const IntentRequest& req) {
+    #include "pcf1_config.h"
+    
+    if (req.args.size() < 1) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Config data required");
+    }
+    
+    String config = req.args[0];
+    for (size_t i = 1; i < req.args.size(); i++) {
+        config += " " + req.args[i];
+    }
+    
+    if (PCF1Config::validateConfig(config)) {
+        IntentResponse resp;
+        resp.data = "valid=true\n";
+        resp.message = "Configuration is valid";
+        return resp;
+    } else {
+        IntentResponse resp(IntentError::ERR_BAD_ARGS, "Configuration validation failed");
+        resp.data = "valid=false\n";
+        resp.data += "errors=" + PCF1Config::getValidationErrors() + "\n";
+        return resp;
+    }
 }
 
 } // namespace PocketOS

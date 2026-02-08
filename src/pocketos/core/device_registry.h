@@ -50,6 +50,7 @@ public:
     // Device lifecycle
     static int bindDevice(const String& driverId, const String& endpoint);
     static bool unbindDevice(int deviceId);
+    static bool unbindAll();  // Unbind all devices
     static bool setDeviceEnabled(int deviceId, bool enabled);
     
     // Device queries
@@ -72,6 +73,9 @@ public:
     
     // Update all devices
     static void updateAll();
+    
+    // Device count
+    static int getDeviceCount() { return deviceCount; }
     
 private:
     static Device devices[MAX_DEVICES];

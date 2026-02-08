@@ -88,6 +88,24 @@ bool DeviceRegistry::unbindDevice(int deviceId) {
     return true;
 }
 
+bool DeviceRegistry::unbindAll() {
+    Logger::info("Unbinding all devices");
+    int unbound = 0;
+    for (int i = 0; i < MAX_DEVICES; i++) {
+        if (devices[i].active) {
+            if (devices[i].driver) {
+                delete devices[i].driver;
+                devices[i].driver = nullptr;
+            }
+            devices[i].active = false;
+            unbound++;
+        }
+    }
+    deviceCount = 0;
+    Logger::info(String("Unbound " + String(unbound) + " devices").c_str());
+    return true;
+}
+
 bool DeviceRegistry::setDeviceEnabled(int deviceId, bool enabled) {
     int idx = findDevice(deviceId);
     if (idx < 0) {
