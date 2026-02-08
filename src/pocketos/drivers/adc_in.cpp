@@ -8,10 +8,11 @@
 namespace PocketOS {
 namespace Drivers {
 
-ADCIn::ADCIn(int pin, int resolution) : pin(pin), resolution(resolution) {
+ADCIn::ADCIn(int pin, int resolution) : pin(pin), resolution(resolution), maxValue(0) {
 }
 
 void ADCIn::init() {
+    maxValue = (1 << resolution) - 1;
     analogReadResolution(resolution);
     Logger::debug("ADC In initialized");
 }
@@ -22,7 +23,6 @@ int ADCIn::read() {
 
 float ADCIn::readVoltage(float vref) {
     int value = read();
-    int maxValue = (1 << resolution) - 1;
     return (value * vref) / maxValue;
 }
 

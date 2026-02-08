@@ -4,9 +4,13 @@
 
 namespace PocketOS {
 
-static String commandBuffer = "";
+#define MAX_COMMAND_LENGTH 128
+static char commandBuffer[MAX_COMMAND_LENGTH];
+static int commandPos = 0;
 
 void CLI::init() {
+    commandPos = 0;
+    commandBuffer[0] = '\0';
     Logger::info("CLI initialized");
     printHelp();
 }
@@ -15,32 +19,38 @@ void CLI::process() {
     while (Serial.available()) {
         char c = Serial.read();
         if (c == '\n' || c == '\r') {
-            if (commandBuffer.length() > 0) {
-                commandBuffer.trim();
+            if (commandPos > 0) {
+                commandBuffer[commandPos] = '\0';
+                
+                // Trim leading/trailing spaces
+                char* cmd = commandBuffer;
+                while (*cmd == ' ') cmd++;
                 
                 // Parse and execute command
-                if (commandBuffer == "help") {
+                if (strcmp(cmd, "help") == 0) {
                     printHelp();
-                } else if (commandBuffer == "status") {
+                } else if (strcmp(cmd, "status") == 0) {
                     Logger::info("PocketOS is running");
-                } else if (commandBuffer == "version") {
+                } else if (strcmp(cmd, "version") == 0) {
                     Serial.println("PocketOS v1.0.0");
-                } else {
+                } else if (*cmd != '\0') {
                     Serial.print("Unknown command: ");
-                    Serial.println(commandBuffer);
+                    Serial.println(cmd);
                     printHelp();
                 }
                 
-                commandBuffer = "";
+                commandPos = 0;
+                commandBuffer[0] = '\0';
                 Serial.print("> ");
             }
         } else if (c == '\b' || c == 127) {
             // Backspace
-            if (commandBuffer.length() > 0) {
-                commandBuffer.remove(commandBuffer.length() - 1);
+            if (commandPos > 0) {
+                commandPos--;
+                commandBuffer[commandPos] = '\0';
             }
-        } else {
-            commandBuffer += c;
+        } else if (commandPos < MAX_COMMAND_LENGTH - 1) {
+            commandBuffer[commandPos++] = c;
         }
     }
 }

@@ -26,7 +26,7 @@ PocketOS is an embedded operating system framework for ESP32 development using P
 ## Project Structure
 
 ```
-PockOs/
+PocketOS/
 ├── platformio.ini          # PlatformIO configuration
 ├── src/
 │   ├── main.cpp           # Entry point

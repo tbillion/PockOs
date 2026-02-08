@@ -9,10 +9,11 @@ namespace PocketOS {
 namespace Drivers {
 
 PWMOut::PWMOut(int pin, int channel, int frequency, int resolution) 
-    : pin(pin), channel(channel), frequency(frequency), resolution(resolution) {
+    : pin(pin), channel(channel), frequency(frequency), resolution(resolution), maxValue(0) {
 }
 
 void PWMOut::init() {
+    maxValue = (1 << resolution) - 1;
     ledcSetup(channel, frequency, resolution);
     ledcAttachPin(pin, channel);
     Logger::debug("PWM Out initialized");
@@ -23,7 +24,6 @@ void PWMOut::write(int dutyCycle) {
 }
 
 void PWMOut::writePct(float percent) {
-    int maxValue = (1 << resolution) - 1;
     int dutyCycle = (int)(maxValue * percent / 100.0);
     write(dutyCycle);
 }

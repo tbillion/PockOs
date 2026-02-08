@@ -12,6 +12,7 @@ private:
     int channel;
     int frequency;
     int resolution;
+    int maxValue;
 
 public:
     PWMOut(int pin, int channel = 0, int frequency = 5000, int resolution = 8);

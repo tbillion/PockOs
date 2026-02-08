@@ -10,6 +10,7 @@ class ADCIn {
 private:
     int pin;
     int resolution;
+    int maxValue;
 
 public:
     ADCIn(int pin, int resolution = 12);
