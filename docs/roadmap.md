@@ -863,3 +863,116 @@ D) Docs:
 
 **Next session:** Phase 3-6 (Transport layer implementations)
 
+
+---
+
+## 2026-02-08 23:25 — Tiered Transport Surfaces: Planning Complete
+
+**Session:** Tiered Transport Surfaces Implementation (Tier0/Tier1/Tier2)
+
+**What was done:**
+- ✅ Created comprehensive session tracking log (4,341 bytes)
+- ✅ Created detailed implementation plan (11,033 bytes)
+- ✅ Designed 3-tier transport architecture
+- ✅ Defined platform support matrix
+- ✅ Outlined 9 implementation phases
+- ✅ Quantified scope: ~10,100 lines across 30+ files
+- ✅ Completed risk assessment
+- ✅ Estimated timeline: 3-4 sessions
+- ✅ Updated roadmap (this entry, append-only)
+
+**Transport Architecture Designed:**
+
+*Tier 0 (Basic Hardware):*
+- GPIO (digital input/output)
+- ADC (analog input)
+- PWM (pulse-width modulation)
+- I2C master/slave
+- SPI master
+- UART
+- OneWire bus
+
+*Tier 1 (Hardware Adapters):*
+- RS485 (UART + DE/RE control)
+- RS232 (UART wrapper)
+- CAN (ESP32 TWAI only)
+- Ethernet PHY/MAC (ESP32 only)
+
+*Tier 2 (Radio/MAC Surfaces):*
+- WiFi (ESP32/ESP8266/Pico W)
+- BLE/Bluetooth (ESP32 only)
+
+**Implementation Phases:**
+1. Transport base & registry (~500 lines)
+2. Tier0 completion: GPIO, ADC, PWM (~1,200 lines)
+3. Tier1 implementation: RS485, RS232, CAN, Ethernet (~1,800 lines)
+4. Tier2 implementation: WiFi, BLE (~1,200 lines)
+5. PCF1 extension for transport config (~800 lines)
+6. Intent API & CLI commands (~600 lines)
+7. Capability reporting updates (~200 lines)
+8. CI & quality enforcement (~100 lines)
+9. Documentation: 3 major docs (~4,000 lines)
+
+**Platform Support Matrix:**
+- ESP32: Full support (all tiers, all transports)
+- ESP8266: Tier0 + Tier1 (no CAN/ETH) + WiFi
+- RP2040: Tier0 + Tier1 (no CAN/ETH) + WiFi (Pico W)
+
+**What remains:**
+- Phase 1: Transport base classes and registry
+- Phase 2: Tier0 completion (GPIO, ADC, PWM transports)
+- Phase 3: Tier1 implementation (RS485, RS232, CAN, Ethernet)
+- Phase 4: Tier2 implementation (WiFi, BLE hardware control)
+- Phase 5: PCF1 extension (transport configuration blocks)
+- Phase 6: Intent API integration (transport.* commands)
+- Phase 7: Platform Pack capability reporting updates
+- Phase 8: CI enforcement (stub detection in transport/)
+- Phase 9: Documentation (TRANSPORT_TIERS.md, TRANSPORT_PCF1.md, TRANSPORT_DEMO.md)
+
+**Blockers/Risks:**
+- **Large scope:** ~10,100 lines across 30+ files requires multiple sessions
+- **Platform differences:** WiFi/BLE APIs vary significantly across platforms
+- **Hardware availability:** CAN (ESP32 only), Ethernet (ESP32 variants), BLE (ESP32 only)
+- **Testing requirements:** Requires physical hardware for all 3 platforms
+- **Integration complexity:** Transport initialization ordering, resource conflicts
+
+**Build status:**
+- Planning phase only - no code changes in this session
+- Existing transport layer: 38,492 bytes (I2C, SPI, UART, OneWire)
+- Platform packs: 17,561 bytes (ESP32, ESP8266, RP2040)
+- Documentation: 15,374 bytes (tracking + plan)
+
+**Definition of Done (Planning):**
+✅ 1. Architecture designed (3-tier model)
+✅ 2. Platform support matrix defined
+✅ 3. Implementation phases outlined
+✅ 4. Scope quantified (~10,100 lines)
+✅ 5. Risk assessment complete
+✅ 6. Timeline estimated (3-4 sessions)
+✅ 7. Session tracking created
+✅ 8. Implementation plan created
+✅ 9. Roadmap updated (append-only)
+
+**Statistics:**
+- Documentation: 15,374 bytes (session tracking + implementation plan)
+- Transport tiers: 3 (Tier0, Tier1, Tier2)
+- Transport types: 13 total (7 Tier0, 4 Tier1, 2 Tier2)
+- Platforms: 3 (ESP32, ESP8266, RP2040)
+- Estimated code: ~10,100 lines
+- Estimated files: 30+
+- Estimated sessions: 3-4 for complete implementation
+- Time spent: ~1.5 hours (analysis + planning + documentation)
+
+**Key Features:**
+- Unified transport interface (TransportBase)
+- Transport registry for enumeration
+- Per-platform implementations
+- PCF1 configuration integration
+- CLI via IntentAPI (transport.* commands)
+- Zero-stub policy enforced by CI
+- Hardware-only (no protocol stacks in this phase)
+
+**Next session should:** Begin Phase 1 (Transport base & registry) to establish the foundation. Then proceed with Phase 2 (Tier0 completion: GPIO, ADC, PWM). Phases 3-9 to follow in subsequent sessions.
+
+**Session complete:** Comprehensive planning complete for tiered transport surfaces. This is a major architectural enhancement that will provide unified hardware abstraction across all communication methods. Clear implementation path established with realistic scope and timeline. Ready for implementation to begin.
+
