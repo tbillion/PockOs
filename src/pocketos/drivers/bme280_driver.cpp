@@ -1,5 +1,10 @@
 #include "bme280_driver.h"
+#include "../driver_config.h"
+
+#if POCKETOS_BME280_ENABLE_LOGGING
 #include "../core/logger.h"
+#endif
+
 #include <Wire.h>
 
 namespace PocketOS {
@@ -21,35 +26,51 @@ namespace PocketOS {
 
 BME280Driver::BME280Driver() : address(0), initialized(false) {
     memset(&calibration, 0, sizeof(calibration));
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+    lastReadTime = 0;
+    readCount = 0;
+    errorCount = 0;
+#endif
 }
 
 bool BME280Driver::init(uint8_t i2cAddress) {
     address = i2cAddress;
     
+#if POCKETOS_BME280_ENABLE_LOGGING
     Logger::info("BME280: Initializing at address 0x" + String(address, HEX));
+#endif
     
     // Check chip ID
     uint8_t chipId = 0;
     if (!readRegister(BME280_REG_CHIP_ID, &chipId)) {
+#if POCKETOS_BME280_ENABLE_LOGGING
         Logger::error("BME280: Failed to read chip ID");
+#endif
         return false;
     }
     
     if (chipId != BME280_CHIP_ID) {
+#if POCKETOS_BME280_ENABLE_LOGGING
         Logger::error("BME280: Invalid chip ID: 0x" + String(chipId, HEX));
+#endif
         return false;
     }
     
+#if POCKETOS_BME280_ENABLE_CONFIGURATION
     // Soft reset
     writeRegister(BME280_REG_RESET, 0xB6);
     delay(10);
+#endif
     
     // Read calibration data
     if (!readCalibrationData()) {
+#if POCKETOS_BME280_ENABLE_LOGGING
         Logger::error("BME280: Failed to read calibration data");
+#endif
         return false;
     }
     
+#if POCKETOS_BME280_ENABLE_CONFIGURATION
     // Configure sensor
     // Humidity oversampling x1
     writeRegister(BME280_REG_CTRL_HUM, 0x01);
@@ -59,9 +80,16 @@ bool BME280Driver::init(uint8_t i2cAddress) {
     
     // Standby time 0.5ms, filter off
     writeRegister(BME280_REG_CONFIG, 0x00);
+#else
+    // Minimal configuration: just wake up the sensor
+    writeRegister(BME280_REG_CTRL_HUM, 0x01);
+    writeRegister(BME280_REG_CTRL_MEAS, 0x27);
+#endif
     
     initialized = true;
+#if POCKETOS_BME280_ENABLE_LOGGING
     Logger::info("BME280: Initialized successfully");
+#endif
     return true;
 }
 
@@ -71,21 +99,34 @@ void BME280Driver::deinit() {
         writeRegister(BME280_REG_CTRL_MEAS, 0x00);
     }
     initialized = false;
+#if POCKETOS_BME280_ENABLE_LOGGING
     Logger::info("BME280: Deinitialized");
+#endif
 }
 
 BME280Data BME280Driver::readData() {
     BME280Data data;
     
     if (!initialized) {
+#if POCKETOS_BME280_ENABLE_LOGGING
         Logger::error("BME280: Not initialized");
+#endif
         return data;
     }
+    
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+    uint32_t startTime = millis();
+#endif
     
     // Read raw data (8 bytes: press_msb, press_lsb, press_xlsb, temp_msb, temp_lsb, temp_xlsb, hum_msb, hum_lsb)
     uint8_t buffer[8];
     if (!readRegisters(BME280_REG_PRESS_MSB, buffer, 8)) {
+#if POCKETOS_BME280_ENABLE_LOGGING
         Logger::error("BME280: Failed to read sensor data");
+#endif
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+        errorCount++;
+#endif
         return data;
     }
     
@@ -107,27 +148,60 @@ BME280Data BME280Driver::readData() {
     data.humidity = hum / 1024.0f;
     
     data.valid = true;
+    
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+    lastReadTime = millis() - startTime;
+    readCount++;
+#endif
+    
     return data;
 }
 
 CapabilitySchema BME280Driver::getSchema() const {
     CapabilitySchema schema;
     
-    // Settings
+    // Basic settings (available in all tiers)
+    schema.addSetting("address", ParamType::STRING, true, "0x76", "", "", "");
+    schema.addSetting("driver", ParamType::STRING, true, "bme280", "", "", "");
+    schema.addSetting("tier", ParamType::STRING, true, POCKETOS_BME280_TIER_NAME, "", "", "");
+    
+#if POCKETOS_BME280_ENABLE_OVERSAMPLING_CONFIG
+    // Advanced settings (FULL tier only)
     schema.addSetting("oversampling_temp", ParamType::INT, false, "1", "1", "16", "1");
     schema.addSetting("oversampling_press", ParamType::INT, false, "1", "1", "16", "1");
     schema.addSetting("oversampling_hum", ParamType::INT, false, "1", "1", "16", "1");
+#endif
+
+#if POCKETOS_BME280_ENABLE_FORCED_MODE
     schema.addSetting("mode", ParamType::ENUM, false, "normal", "", "", "");
+#endif
+
+#if POCKETOS_BME280_ENABLE_IIR_FILTER
     schema.addSetting("filter", ParamType::INT, false, "0", "0", "16", "1");
+#endif
     
-    // Signals (read-only measurements)
+    // Signals (read-only measurements) - available in all tiers
     schema.addSignal("temperature", ParamType::FLOAT, true, "°C");
     schema.addSignal("humidity", ParamType::FLOAT, true, "%RH");
     schema.addSignal("pressure", ParamType::FLOAT, true, "hPa");
     
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+    // Diagnostic signals (FULL tier only)
+    schema.addSignal("read_count", ParamType::INT, true, "");
+    schema.addSignal("error_count", ParamType::INT, true, "");
+    schema.addSignal("last_read_time", ParamType::INT, true, "ms");
+#endif
+    
     // Commands
     schema.addCommand("read", "");
+    
+#if POCKETOS_BME280_ENABLE_CONFIGURATION
     schema.addCommand("reset", "");
+#endif
+    
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+    schema.addCommand("get_diagnostics", "");
+#endif
     
     return schema;
 }
@@ -137,16 +211,31 @@ String BME280Driver::getParameter(const String& name) {
         return "0x" + String(address, HEX);
     } else if (name == "driver") {
         return "bme280";
+    } else if (name == "tier") {
+        return POCKETOS_BME280_TIER_NAME;
     } else if (name == "initialized") {
         return initialized ? "true" : "false";
     }
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+    else if (name == "read_count") {
+        return String(readCount);
+    } else if (name == "error_count") {
+        return String(errorCount);
+    } else if (name == "last_read_time") {
+        return String(lastReadTime);
+    }
+#endif
     return "";
 }
 
 bool BME280Driver::setParameter(const String& name, const String& value) {
+#if POCKETOS_BME280_ENABLE_CONFIGURATION
     // BME280 settings are mostly read-only in this simple implementation
     // Future: Add support for changing oversampling, mode, filter
+#if POCKETOS_BME280_ENABLE_LOGGING
     Logger::warn("BME280: Parameter '" + name + "' is read-only");
+#endif
+#endif
     return false;
 }
 
@@ -280,5 +369,25 @@ uint32_t BME280Driver::compensateHumidity(int32_t adc_H) {
     
     return (uint32_t)(v_x1_u32r >> 12);
 }
+
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+String BME280Driver::getDiagnostics() {
+    String diag = "BME280 Diagnostics:\n";
+    diag += "  Tier: " + String(POCKETOS_BME280_TIER_NAME) + "\n";
+    diag += "  Address: 0x" + String(address, HEX) + "\n";
+    diag += "  Initialized: " + String(initialized ? "yes" : "no") + "\n";
+    diag += "  Read Count: " + String(readCount) + "\n";
+    diag += "  Error Count: " + String(errorCount) + "\n";
+    diag += "  Last Read Time: " + String(lastReadTime) + " ms\n";
+    diag += "  Success Rate: ";
+    if (readCount + errorCount > 0) {
+        float successRate = (float)readCount / (readCount + errorCount) * 100.0f;
+        diag += String(successRate, 1) + "%\n";
+    } else {
+        diag += "N/A\n";
+    }
+    return diag;
+}
+#endif
 
 } // namespace PocketOS

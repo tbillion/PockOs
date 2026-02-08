@@ -2,6 +2,7 @@
 #define POCKETOS_BME280_DRIVER_H
 
 #include <Arduino.h>
+#include "../driver_config.h"
 #include "../core/capability_schema.h"
 
 namespace PocketOS {
@@ -65,11 +66,25 @@ public:
     // Device info
     uint8_t getAddress() const { return address; }
     String getDriverId() const { return "bme280"; }
+    String getDriverTier() const { return POCKETOS_BME280_TIER_NAME; }
+    
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+    // Advanced diagnostics (FULL tier only)
+    String getDiagnostics();
+    uint32_t getLastReadTime() const { return lastReadTime; }
+    uint32_t getReadCount() const { return readCount; }
+#endif
     
 private:
     uint8_t address;
     bool initialized;
     BME280CalibrationData calibration;
+    
+#if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
+    uint32_t lastReadTime;
+    uint32_t readCount;
+    uint32_t errorCount;
+#endif
     
     // I2C communication
     bool writeRegister(uint8_t reg, uint8_t value);
