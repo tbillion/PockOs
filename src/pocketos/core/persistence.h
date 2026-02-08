@@ -1,0 +1,17 @@
+#ifndef POCKETOS_PERSISTENCE_H
+#define POCKETOS_PERSISTENCE_H
+
+namespace PocketOS {
+
+class Persistence {
+public:
+    static void init();
+    static bool save(const char* key, const char* value);
+    static bool load(const char* key, char* value, size_t maxLen);
+    static bool remove(const char* key);
+    static void clear();
+};
+
+} // namespace PocketOS
+
+#endif // POCKETOS_PERSISTENCE_H
