@@ -23,6 +23,9 @@ public:
     static bool saveDeviceBindings();
     static bool loadDeviceBindings();
     
+    // Export configuration
+    static String exportConfig();
+    
 private:
     static bool initialized;
     

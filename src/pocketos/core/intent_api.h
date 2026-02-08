@@ -80,6 +80,7 @@ public:
     static IntentResponse handleDevUnbind(const IntentRequest& req);
     static IntentResponse handleDevEnable(const IntentRequest& req);
     static IntentResponse handleDevDisable(const IntentRequest& req);
+    static IntentResponse handleDevStatus(const IntentRequest& req);
     static IntentResponse handleParamGet(const IntentRequest& req);
     static IntentResponse handleParamSet(const IntentRequest& req);
     static IntentResponse handleSchemaGet(const IntentRequest& req);
@@ -87,6 +88,11 @@ public:
     static IntentResponse handleLogClear(const IntentRequest& req);
     static IntentResponse handlePersistSave(const IntentRequest& req);
     static IntentResponse handlePersistLoad(const IntentRequest& req);
+    static IntentResponse handleConfigExport(const IntentRequest& req);
+    static IntentResponse handleConfigImport(const IntentRequest& req);
+    static IntentResponse handleBusList(const IntentRequest& req);
+    static IntentResponse handleBusInfo(const IntentRequest& req);
+    static IntentResponse handleBusConfig(const IntentRequest& req);
     
 private:
     static bool initialized;

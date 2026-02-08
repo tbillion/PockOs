@@ -110,6 +110,9 @@ const char* CapabilitySchema::paramTypeToString(ParamType type) {
         case ParamType::FLOAT: return "float";
         case ParamType::ENUM: return "enum";
         case ParamType::STRING: return "string";
+        case ParamType::EVENT: return "event";
+        case ParamType::COUNTER: return "counter";
+        case ParamType::BLOB: return "blob";
         default: return "unknown";
     }
 }

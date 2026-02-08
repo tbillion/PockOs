@@ -85,4 +85,21 @@ bool Persistence::loadDeviceBindings() {
     return true;
 }
 
+String Persistence::exportConfig() {
+    String config = "";
+    
+    #ifdef ESP32
+    if (initialized && prefs.begin("pocketos", true)) {  // Read-only
+        // Export any stored configuration
+        config += "# Persistence namespace: pocketos\n";
+        config += "# (NVS key-value pairs would be listed here)\n";
+        prefs.end();
+    }
+    #else
+    config += "# Persistence not available on this platform\n";
+    #endif
+    
+    return config;
+}
+
 } // namespace PocketOS

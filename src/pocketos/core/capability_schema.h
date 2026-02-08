@@ -14,7 +14,10 @@ enum class ParamType {
     INT,
     FLOAT,
     ENUM,
-    STRING
+    STRING,
+    EVENT,    // Event/trigger type
+    COUNTER,  // Counter/accumulator type
+    BLOB      // Binary blob/buffer type
 };
 
 struct SchemaParam {

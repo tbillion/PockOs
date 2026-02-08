@@ -203,4 +203,41 @@ const char* DeviceRegistry::deviceStateToString(DeviceState state) {
     }
 }
 
+String DeviceRegistry::getDeviceStatus(int deviceId) {
+    int idx = findDevice(deviceId);
+    if (idx < 0) {
+        return "";
+    }
+    
+    Device& dev = devices[idx];
+    String status = "";
+    status += "device_id=" + String(dev.deviceId) + "\n";
+    status += "endpoint=" + dev.endpoint + "\n";
+    status += "driver=" + dev.driverId + "\n";
+    status += "state=" + String(deviceStateToString(dev.state)) + "\n";
+    status += "init_failures=" + String(dev.initFailCount) + "\n";
+    status += "io_failures=" + String(dev.ioFailCount) + "\n";
+    status += "last_ok_ms=" + String(dev.lastOkMs) + "\n";
+    status += "uptime_ms=" + String(millis() - dev.lastOkMs) + "\n";
+    
+    return status;
+}
+
+String DeviceRegistry::exportConfig() {
+    String config = "";
+    
+    for (int i = 0; i < MAX_DEVICES; i++) {
+        if (devices[i].active) {
+            config += "bind " + devices[i].driverId + " " + devices[i].endpoint + "\n";
+            
+            // Export device state
+            if (devices[i].state == DeviceState::DISABLED) {
+                config += "# dev.disable " + String(devices[i].deviceId) + "\n";
+            }
+        }
+    }
+    
+    return config;
+}
+
 } // namespace PocketOS

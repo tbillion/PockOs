@@ -153,7 +153,9 @@ const char* EndpointRegistry::endpointTypeToString(EndpointType type) {
         case EndpointType::I2C_BUS: return "i2c.bus";
         case EndpointType::I2C_ADDR: return "i2c.addr";
         case EndpointType::SPI_BUS: return "spi.bus";
+        case EndpointType::SPI_DEVICE: return "spi.device";
         case EndpointType::UART: return "uart";
+        case EndpointType::ONEWIRE: return "onewire";
         default: return "unknown";
     }
 }
@@ -166,8 +168,10 @@ EndpointType EndpointRegistry::parseEndpointType(const String& address) {
     if (address.startsWith("adc")) return EndpointType::ADC_CH;
     if (address.startsWith("i2c") && address.indexOf(':') > 0) return EndpointType::I2C_ADDR;
     if (address.startsWith("i2c")) return EndpointType::I2C_BUS;
+    if (address.startsWith("spi") && address.indexOf(':') > 0) return EndpointType::SPI_DEVICE;
     if (address.startsWith("spi")) return EndpointType::SPI_BUS;
     if (address.startsWith("uart")) return EndpointType::UART;
+    if (address.startsWith("onewire")) return EndpointType::ONEWIRE;
     return EndpointType::UNKNOWN;
 }
 

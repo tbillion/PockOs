@@ -36,6 +36,8 @@ IntentResponse IntentAPI::dispatch(const IntentRequest& request) {
         return handleDevEnable(request);
     } else if (request.intent == "dev.disable") {
         return handleDevDisable(request);
+    } else if (request.intent == "dev.status") {
+        return handleDevStatus(request);
     } else if (request.intent == "param.get") {
         return handleParamGet(request);
     } else if (request.intent == "param.set") {
@@ -50,6 +52,16 @@ IntentResponse IntentAPI::dispatch(const IntentRequest& request) {
         return handlePersistSave(request);
     } else if (request.intent == "persist.load") {
         return handlePersistLoad(request);
+    } else if (request.intent == "config.export") {
+        return handleConfigExport(request);
+    } else if (request.intent == "config.import") {
+        return handleConfigImport(request);
+    } else if (request.intent == "bus.list") {
+        return handleBusList(request);
+    } else if (request.intent == "bus.info") {
+        return handleBusInfo(request);
+    } else if (request.intent == "bus.config") {
+        return handleBusConfig(request);
     }
     
     return IntentResponse(IntentError::ERR_NOT_FOUND, "Unknown intent");
@@ -223,6 +235,124 @@ IntentResponse IntentAPI::handlePersistLoad(const IntentRequest& req) {
         return IntentResponse();
     }
     return IntentResponse(IntentError::ERR_IO, "Failed to load");
+}
+
+IntentResponse IntentAPI::handleDevStatus(const IntentRequest& req) {
+    if (req.argCount < 1) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: dev.status <device_id>");
+    }
+    
+    int deviceId = req.args[0].toInt();
+    String status = DeviceRegistry::getDeviceStatus(deviceId);
+    if (status.length() > 0) {
+        IntentResponse resp;
+        resp.data = status;
+        return resp;
+    }
+    return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
+}
+
+IntentResponse IntentAPI::handleConfigExport(const IntentRequest& req) {
+    // Export configuration in text format
+    String config = "# PocketOS Configuration Export\n";
+    config += "# Generated: " + String(millis()) + "ms\n\n";
+    
+    // Export device bindings
+    config += "# Device Bindings\n";
+    config += DeviceRegistry::exportConfig();
+    config += "\n";
+    
+    // Export persistence data
+    config += "# Persistence Data\n";
+    config += Persistence::exportConfig();
+    
+    IntentResponse resp;
+    resp.data = config;
+    return resp;
+}
+
+IntentResponse IntentAPI::handleConfigImport(const IntentRequest& req) {
+    if (req.argCount < 1) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: config.import <config_data>");
+    }
+    
+    // Import configuration from text format
+    // This is a placeholder - full implementation would parse the config data
+    return IntentResponse(IntentError::ERR_UNSUPPORTED, "Config import not yet implemented");
+}
+
+IntentResponse IntentAPI::handleBusList(const IntentRequest& req) {
+    // List available buses
+    IntentResponse resp;
+    resp.data = "";
+    
+    // List I2C buses
+    int i2cCount = HAL::getI2CCount();
+    for (int i = 0; i < i2cCount; i++) {
+        resp.data += "i2c" + String(i) + " (I2C Bus " + String(i) + ")\n";
+    }
+    
+    // List SPI buses
+    int spiCount = HAL::getSPICount();
+    for (int i = 0; i < spiCount; i++) {
+        resp.data += "spi" + String(i) + " (SPI Bus " + String(i) + ")\n";
+    }
+    
+    // List UART ports
+    int uartCount = HAL::getUARTCount();
+    for (int i = 0; i < uartCount; i++) {
+        resp.data += "uart" + String(i) + " (UART Port " + String(i) + ")\n";
+    }
+    
+    if (resp.data.length() == 0) {
+        resp.data = "No buses available\n";
+    }
+    
+    return resp;
+}
+
+IntentResponse IntentAPI::handleBusInfo(const IntentRequest& req) {
+    if (req.argCount < 1) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: bus.info <bus_name>");
+    }
+    
+    String busName = req.args[0];
+    IntentResponse resp;
+    
+    if (busName.startsWith("i2c")) {
+        int busNum = busName.substring(3).toInt();
+        resp.data = "Bus: " + busName + "\n";
+        resp.data += "Type: I2C\n";
+        resp.data += "Status: ";
+        resp.data += (busNum < HAL::getI2CCount()) ? "Available\n" : "Not available\n";
+        resp.data += "Frequency: 100kHz (default)\n";
+    } else if (busName.startsWith("spi")) {
+        int busNum = busName.substring(3).toInt();
+        resp.data = "Bus: " + busName + "\n";
+        resp.data += "Type: SPI\n";
+        resp.data += "Status: ";
+        resp.data += (busNum < HAL::getSPICount()) ? "Available\n" : "Not available\n";
+    } else if (busName.startsWith("uart")) {
+        int busNum = busName.substring(4).toInt();
+        resp.data = "Bus: " + busName + "\n";
+        resp.data += "Type: UART\n";
+        resp.data += "Status: ";
+        resp.data += (busNum < HAL::getUARTCount()) ? "Available\n" : "Not available\n";
+    } else {
+        return IntentResponse(IntentError::ERR_NOT_FOUND, "Bus not found");
+    }
+    
+    return resp;
+}
+
+IntentResponse IntentAPI::handleBusConfig(const IntentRequest& req) {
+    if (req.argCount < 1) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: bus.config <bus_name> [params...]");
+    }
+    
+    // Bus configuration is a placeholder for future implementation
+    // Would configure I2C frequency, SPI mode, UART baud rate, etc.
+    return IntentResponse(IntentError::ERR_UNSUPPORTED, "Bus configuration not yet implemented");
 }
 
 } // namespace PocketOS

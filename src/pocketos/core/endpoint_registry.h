@@ -16,7 +16,9 @@ enum class EndpointType {
     I2C_BUS,
     I2C_ADDR,
     SPI_BUS,
+    SPI_DEVICE,  // SPI device with CS pin
     UART,
+    ONEWIRE,     // OneWire bus
     UNKNOWN
 };
 

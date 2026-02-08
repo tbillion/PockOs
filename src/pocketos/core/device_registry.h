@@ -64,6 +64,12 @@ public:
     // Schema query
     static String getDeviceSchema(int deviceId);
     
+    // Device status and health
+    static String getDeviceStatus(int deviceId);
+    
+    // Config export
+    static String exportConfig();
+    
     // Update all devices
     static void updateAll();
     

@@ -145,6 +145,10 @@ void CLI::parseCommand(const String& cmdLine, IntentRequest& request) {
         request.intent = "schema.get";
         request.args[0] = tokens[1];
         request.argCount = 1;
+    } else if (cmd == "status" && tokenCount > 1) {
+        request.intent = "dev.status";
+        request.args[0] = tokens[1];
+        request.argCount = 1;
     } else if (cmd == "log") {
         if (tokenCount > 1 && tokens[1] == "tail") {
             request.intent = "log.tail";
@@ -160,6 +164,27 @@ void CLI::parseCommand(const String& cmdLine, IntentRequest& request) {
             request.intent = "persist.save";
         } else if (tokenCount > 1 && tokens[1] == "load") {
             request.intent = "persist.load";
+        }
+    } else if (cmd == "config") {
+        if (tokenCount > 1 && tokens[1] == "export") {
+            request.intent = "config.export";
+        } else if (tokenCount > 1 && tokens[1] == "import") {
+            request.intent = "config.import";
+            // Would need to handle multi-line config data
+        }
+    } else if (cmd == "bus") {
+        if (tokenCount > 1) {
+            if (tokens[1] == "list") {
+                request.intent = "bus.list";
+            } else if (tokens[1] == "info" && tokenCount > 2) {
+                request.intent = "bus.info";
+                request.args[0] = tokens[2];
+                request.argCount = 1;
+            } else if (tokens[1] == "config" && tokenCount > 2) {
+                request.intent = "bus.config";
+                request.args[0] = tokens[2];
+                request.argCount = 1;
+            }
         }
     }
 }
@@ -183,22 +208,42 @@ void CLI::printResponse(const IntentResponse& response) {
 }
 
 void CLI::printHelp() {
-    Serial.println("PocketOS CLI Commands:");
+    Serial.println("PocketOS Device Manager CLI Commands:");
+    Serial.println();
+    Serial.println("System & Hardware:");
     Serial.println("  help                           - Show this help");
     Serial.println("  sys info                       - System information");
     Serial.println("  hal caps                       - Hardware capabilities");
+    Serial.println();
+    Serial.println("Bus Management:");
+    Serial.println("  bus list                       - List available buses");
+    Serial.println("  bus info <bus>                 - Bus information (e.g., bus info i2c0)");
+    Serial.println("  bus config <bus> [params]      - Configure bus (future)");
+    Serial.println();
+    Serial.println("Endpoints:");
     Serial.println("  ep list                        - List endpoints");
     Serial.println("  ep probe <endpoint>            - Probe endpoint (e.g., i2c0)");
+    Serial.println();
+    Serial.println("Device Management:");
     Serial.println("  dev list                       - List devices");
     Serial.println("  bind <driver> <endpoint>       - Bind device (e.g., bind gpio.dout gpio.dout.2)");
     Serial.println("  unbind <device_id>             - Unbind device");
+    Serial.println("  status <device_id>             - Device status and health");
+    Serial.println();
+    Serial.println("Device Configuration:");
+    Serial.println("  schema <device_id>             - Show device schema");
     Serial.println("  param get <dev_id> <param>     - Get parameter");
     Serial.println("  param set <dev_id> <param> <val> - Set parameter");
-    Serial.println("  schema <device_id>             - Get device schema");
-    Serial.println("  log tail [n]                   - Show last n log lines");
-    Serial.println("  log clear                      - Clear log");
+    Serial.println();
+    Serial.println("Persistence & Config:");
     Serial.println("  persist save                   - Save configuration");
     Serial.println("  persist load                   - Load configuration");
+    Serial.println("  config export                  - Export configuration");
+    Serial.println("  config import <data>           - Import configuration (future)");
+    Serial.println();
+    Serial.println("Logging:");
+    Serial.println("  log tail [n]                   - Show last n log lines");
+    Serial.println("  log clear                      - Clear log");
     Serial.println();
 }
 
