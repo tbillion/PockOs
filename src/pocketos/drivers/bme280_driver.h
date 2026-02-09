@@ -4,8 +4,13 @@
 #include <Arduino.h>
 #include "../driver_config.h"
 #include "../core/capability_schema.h"
+#include "register_types.h"
 
 namespace PocketOS {
+
+// BME280 valid I2C addresses
+#define BME280_ADDR_COUNT 2
+const uint8_t BME280_VALID_ADDRESSES[BME280_ADDR_COUNT] = { 0x76, 0x77 };
 
 // BME280 calibration data structure
 struct BME280CalibrationData {
@@ -68,8 +73,31 @@ public:
     String getDriverId() const { return "bme280"; }
     String getDriverTier() const { return POCKETOS_BME280_TIER_NAME; }
     
+    // Address enumeration (all tiers)
+    static const uint8_t* validAddresses(size_t& count) {
+        count = BME280_ADDR_COUNT;
+        return BME280_VALID_ADDRESSES;
+    }
+    
+    static bool supportsAddress(uint8_t addr) {
+        for (size_t i = 0; i < BME280_ADDR_COUNT; i++) {
+            if (BME280_VALID_ADDRESSES[i] == addr) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+#if POCKETOS_BME280_ENABLE_REGISTER_ACCESS
+    // Tier 2: Complete register access
+    const RegisterDesc* registers(size_t& count) const;
+    bool regRead(uint16_t reg, uint8_t* buf, size_t len);
+    bool regWrite(uint16_t reg, const uint8_t* buf, size_t len);
+    const RegisterDesc* findRegisterByName(const String& name) const;
+#endif
+    
 #if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
-    // Advanced diagnostics (FULL tier only)
+    // Advanced diagnostics (Tier 1+ only)
     String getDiagnostics();
     uint32_t getLastReadTime() const { return lastReadTime; }
     uint32_t getReadCount() const { return readCount; }

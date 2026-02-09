@@ -390,4 +390,120 @@ String BME280Driver::getDiagnostics() {
 }
 #endif
 
+#if POCKETOS_BME280_ENABLE_REGISTER_ACCESS
+// Complete BME280 register map (Tier 2 only)
+static const RegisterDesc BME280_REGISTERS[] = {
+    // Calibration registers (Read-only)
+    RegisterDesc(0x88, "DIG_T1_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x89, "DIG_T1_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x8A, "DIG_T2_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x8B, "DIG_T2_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x8C, "DIG_T3_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x8D, "DIG_T3_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x8E, "DIG_P1_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x8F, "DIG_P1_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x90, "DIG_P2_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x91, "DIG_P2_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x92, "DIG_P3_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x93, "DIG_P3_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x94, "DIG_P4_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x95, "DIG_P4_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x96, "DIG_P5_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x97, "DIG_P5_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x98, "DIG_P6_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x99, "DIG_P6_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x9A, "DIG_P7_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x9B, "DIG_P7_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x9C, "DIG_P8_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x9D, "DIG_P8_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x9E, "DIG_P9_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0x9F, "DIG_P9_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xA1, "DIG_H1", 1, RegisterAccess::RO, 0x00),
+    
+    // Chip ID (Read-only)
+    RegisterDesc(0xD0, "CHIP_ID", 1, RegisterAccess::RO, 0x60),
+    
+    // Reset register (Write-only)
+    RegisterDesc(0xE0, "RESET", 1, RegisterAccess::WO, 0x00),
+    
+    // Humidity calibration registers (Read-only)
+    RegisterDesc(0xE1, "DIG_H2_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xE2, "DIG_H2_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xE3, "DIG_H3", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xE4, "DIG_H4_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xE5, "DIG_H4_LSB_H5_MSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xE6, "DIG_H5_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xE7, "DIG_H6", 1, RegisterAccess::RO, 0x00),
+    
+    // Control registers (Read-write)
+    RegisterDesc(0xF2, "CTRL_HUM", 1, RegisterAccess::RW, 0x00),
+    RegisterDesc(0xF3, "STATUS", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xF4, "CTRL_MEAS", 1, RegisterAccess::RW, 0x00),
+    RegisterDesc(0xF5, "CONFIG", 1, RegisterAccess::RW, 0x00),
+    
+    // Data registers (Read-only)
+    RegisterDesc(0xF7, "PRESS_MSB", 1, RegisterAccess::RO, 0x80),
+    RegisterDesc(0xF8, "PRESS_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xF9, "PRESS_XLSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xFA, "TEMP_MSB", 1, RegisterAccess::RO, 0x80),
+    RegisterDesc(0xFB, "TEMP_LSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xFC, "TEMP_XLSB", 1, RegisterAccess::RO, 0x00),
+    RegisterDesc(0xFD, "HUM_MSB", 1, RegisterAccess::RO, 0x80),
+    RegisterDesc(0xFE, "HUM_LSB", 1, RegisterAccess::RO, 0x00),
+};
+
+#define BME280_REGISTER_COUNT (sizeof(BME280_REGISTERS) / sizeof(RegisterDesc))
+
+const RegisterDesc* BME280Driver::registers(size_t& count) const {
+    count = BME280_REGISTER_COUNT;
+    return BME280_REGISTERS;
+}
+
+bool BME280Driver::regRead(uint16_t reg, uint8_t* buf, size_t len) {
+    if (!initialized || reg > 0xFF) {
+        return false;
+    }
+    
+    // Find register to validate it exists and is readable
+    const RegisterDesc* regDesc = RegisterUtils::findByAddr(BME280_REGISTERS, BME280_REGISTER_COUNT, (uint16_t)reg);
+    if (!regDesc) {
+        return false; // Register not found
+    }
+    
+    if (!RegisterUtils::isReadable(regDesc->access)) {
+        return false; // Register is write-only
+    }
+    
+    // Read the register(s)
+    if (len == 1) {
+        return readRegister((uint8_t)reg, buf);
+    } else {
+        return readRegisters((uint8_t)reg, buf, len);
+    }
+}
+
+bool BME280Driver::regWrite(uint16_t reg, const uint8_t* buf, size_t len) {
+    if (!initialized || reg > 0xFF || len != 1) {
+        return false;
+    }
+    
+    // Find register to validate it exists and is writable
+    const RegisterDesc* regDesc = RegisterUtils::findByAddr(BME280_REGISTERS, BME280_REGISTER_COUNT, (uint16_t)reg);
+    if (!regDesc) {
+        return false; // Register not found
+    }
+    
+    if (!RegisterUtils::isWritable(regDesc->access)) {
+        return false; // Register is read-only
+    }
+    
+    // Write the register
+    return writeRegister((uint8_t)reg, buf[0]);
+}
+
+const RegisterDesc* BME280Driver::findRegisterByName(const String& name) const {
+    return RegisterUtils::findByName(BME280_REGISTERS, BME280_REGISTER_COUNT, name);
+}
+#endif
+
 } // namespace PocketOS
