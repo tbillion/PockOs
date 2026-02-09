@@ -234,10 +234,19 @@ void SPIDriverBase::setCS(bool active) {
     }
 }
 
-void SPIDriverBase::setDC(bool command) {
+void SPIDriverBase::setDC(bool isCommand) {
     if (pins_.dc >= 0) {
-        digitalWrite(pins_.dc, command ? LOW : HIGH);  // Command=low, Data=high
+        // Most displays: LOW=command, HIGH=data
+        digitalWrite(pins_.dc, isCommand ? LOW : HIGH);
     }
+}
+
+void SPIDriverBase::setDCCommand() {
+    setDC(true);  // Command mode (LOW)
+}
+
+void SPIDriverBase::setDCData() {
+    setDC(false);  // Data mode (HIGH)
 }
 
 void SPIDriverBase::setRST(bool active) {

@@ -58,9 +58,14 @@ public:
     
     // Pin control helpers
     void setCS(bool active);  // CS control (active low by default)
-    void setDC(bool command);  // DC control (true=command, false=data)
     void setRST(bool active);  // RST control (active low by default)
     bool readBusy() const;     // Read BUSY pin
+    
+    // DC pin control (for displays)
+    // Note: Most displays use LOW=command, HIGH=data convention
+    void setDC(bool isCommand);  // DC control (true=command/LOW, false=data/HIGH)
+    void setDCCommand();         // Set DC to command mode (LOW)
+    void setDCData();            // Set DC to data mode (HIGH)
     
     // Register access convention configuration
     void setRegisterConvention(SPIRegisterConvention convention) { reg_convention_ = convention; }

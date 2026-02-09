@@ -105,13 +105,13 @@ public:
         
         // Use DC pin for command/data selection
         if (getPinConfig().dc >= 0) {
-            // Send command (DC=LOW for most displays)
-            setDC(true);   // Command mode (sets pin LOW)
+            // Send command using explicit method
+            setDCCommand();  // Command mode (DC=LOW)
             uint8_t cmd = 0x01;
             spiWrite(&cmd, 1);
             
-            // Send data (DC=HIGH for most displays)
-            setDC(false);  // Data mode (sets pin HIGH)
+            // Send data using explicit method
+            setDCData();  // Data mode (DC=HIGH)
             uint8_t data[] = {0x00, 0x01, 0x02};
             spiWrite(data, 3);
         }
