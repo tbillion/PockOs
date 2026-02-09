@@ -269,7 +269,7 @@ bool SX127xDriver::setFrequency(uint32_t freq_hz) {
     frequency_ = freq_hz;
     
     // Calculate frequency register value
-    // Frf = (Frf / 32MHz) * 2^19
+    // Frf = (freq_hz / 32000000Hz) * 2^19
     uint64_t frf = ((uint64_t)freq_hz << 19) / 32000000;
     
     writeRegister(0x06, (uint8_t)(frf >> 16));

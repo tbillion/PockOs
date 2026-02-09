@@ -189,6 +189,10 @@ bool W5500Driver::identifyProbe(const String& endpoint) {
     return version == 0x04;
 }
 
+uint8_t W5500Driver::getSocketBlockBase(uint8_t socket) const {
+    return W5500_BSB_S0_REG + (socket * 0x20);
+}
+
 bool W5500Driver::readReg(uint8_t block, uint16_t addr, uint8_t* data, uint16_t len) {
     if (!initialized_) {
         return false;
@@ -262,7 +266,7 @@ bool W5500Driver::socketOpen(uint8_t socket, uint8_t protocol, uint16_t port) {
         return false;
     }
     
-    uint8_t block = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block = getSocketBlockBase(socket);
     
     // Close socket if open
     writeByte(block, 0x0001, W5500_CMD_CLOSE);
@@ -286,7 +290,7 @@ bool W5500Driver::socketClose(uint8_t socket) {
         return false;
     }
     
-    uint8_t block = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block = getSocketBlockBase(socket);
     writeByte(block, 0x0001, W5500_CMD_CLOSE);
     delay(1);
     
@@ -298,7 +302,7 @@ bool W5500Driver::socketConnect(uint8_t socket, const uint8_t* ip, uint16_t port
         return false;
     }
     
-    uint8_t block = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block = getSocketBlockBase(socket);
     
     // Set destination IP
     writeReg(block, 0x000C, ip, 4);
@@ -317,7 +321,7 @@ bool W5500Driver::socketListen(uint8_t socket) {
         return false;
     }
     
-    uint8_t block = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block = getSocketBlockBase(socket);
     writeByte(block, 0x0001, W5500_CMD_LISTEN);
     
     return true;
@@ -328,7 +332,7 @@ int16_t W5500Driver::socketSend(uint8_t socket, const uint8_t* data, uint16_t le
         return -1;
     }
     
-    uint8_t block_reg = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block_reg = getSocketBlockBase(socket);
     uint8_t block_tx = W5500_BSB_S0_TX_BUF + (socket * 0x20);
     
     // Get TX write pointer
@@ -352,7 +356,7 @@ int16_t W5500Driver::socketRecv(uint8_t socket, uint8_t* data, uint16_t len) {
         return -1;
     }
     
-    uint8_t block_reg = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block_reg = getSocketBlockBase(socket);
     uint8_t block_rx = W5500_BSB_S0_RX_BUF + (socket * 0x20);
     
     // Get RX received size
@@ -387,7 +391,7 @@ uint8_t W5500Driver::socketStatus(uint8_t socket) {
         return 0xFF;
     }
     
-    uint8_t block = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block = getSocketBlockBase(socket);
     return readByte(block, 0x0003);
 }
 #endif
@@ -430,7 +434,7 @@ bool W5500Driver::socketSendTo(uint8_t socket, const uint8_t* data, uint16_t len
         return false;
     }
     
-    uint8_t block_reg = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block_reg = getSocketBlockBase(socket);
     uint8_t block_tx = W5500_BSB_S0_TX_BUF + (socket * 0x20);
     
     // Set destination IP and port
@@ -458,7 +462,7 @@ int16_t W5500Driver::socketRecvFrom(uint8_t socket, uint8_t* data, uint16_t len,
         return -1;
     }
     
-    uint8_t block_reg = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block_reg = getSocketBlockBase(socket);
     uint8_t block_rx = W5500_BSB_S0_RX_BUF + (socket * 0x20);
     
     // Get RX received size
@@ -507,7 +511,7 @@ uint16_t W5500Driver::getTxFreeSize(uint8_t socket) {
         return 0;
     }
     
-    uint8_t block = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block = getSocketBlockBase(socket);
     return readWord(block, 0x0020);
 }
 
@@ -516,7 +520,7 @@ uint16_t W5500Driver::getRxRecvSize(uint8_t socket) {
         return 0;
     }
     
-    uint8_t block = W5500_BSB_S0_REG + (socket * 0x20);
+    uint8_t block = getSocketBlockBase(socket);
     return readWord(block, 0x0026);
 }
 #endif

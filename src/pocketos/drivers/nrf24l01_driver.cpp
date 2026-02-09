@@ -222,7 +222,9 @@ bool NRF24L01Driver::receive(uint8_t* data, uint8_t& len) {
         return false;
     }
     
-    // Read payload length (assuming fixed size for simplicity)
+    // Read payload length from register RX_PW_P0 (assumes pipe 0)
+    // For dynamic payload, this would need to be read from DPL feature
+    // For now, fixed at 32 bytes as maximum payload size
     len = 32;
     
     // Read payload
