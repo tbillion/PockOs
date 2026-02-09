@@ -18,7 +18,7 @@ public:
     // Transport tier classification
     enum class Tier {
         TIER0,  // Basic hardware: GPIO, ADC, PWM, I2C, SPI, UART, OneWire
-        TIER1,  // Hardware adapters: RS485, RS232, CAN, Ethernet, MCP2515, nRF24, LoRa, RC
+        TIER1,  // Hardware adapters: RS485, RS232, CAN, Ethernet, RC
         TIER2   // Radio/MAC surfaces: WiFi, BLE
     };
     
@@ -46,9 +46,6 @@ public:
         RS232,
         CAN,
         ETHERNET,
-        MCP2515,
-        NRF24L01,
-        LORAWAN,
         RC_TRANSCEIVER,
         // Tier 2
         WIFI,
