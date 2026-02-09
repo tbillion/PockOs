@@ -175,20 +175,20 @@ CapabilitySchema ICM20948Driver::getSchema() const {
     CapabilitySchema schema;
     
     // Basic settings
-    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "icm20948");
-    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, POCKETOS_ICM20948_TIER_NAME);
+    schema.addSetting("driver", ParamType::STRING, true, "icm20948", "", "", "");
+    schema.addSetting("tier", ParamType::STRING, true, POCKETOS_ICM20948_TIER_NAME, "", "", "");
     
     // Output signals
-    schema.addSignal("accel_x", ParamType::FLOAT, false, "m/s²");
-    schema.addSignal("accel_y", ParamType::FLOAT, false, "m/s²");
-    schema.addSignal("accel_z", ParamType::FLOAT, false, "m/s²");
-    schema.addSignal("gyro_x", ParamType::FLOAT, false, "rad/s");
-    schema.addSignal("gyro_y", ParamType::FLOAT, false, "rad/s");
-    schema.addSignal("gyro_z", ParamType::FLOAT, false, "rad/s");
-    schema.addSignal("mag_x", ParamType::FLOAT, false, "µT");
-    schema.addSignal("mag_y", ParamType::FLOAT, false, "µT");
-    schema.addSignal("mag_z", ParamType::FLOAT, false, "µT");
-    schema.addSignal("temperature", ParamType::FLOAT, false, "°C");
+    schema.addSignal("accel_x", ParamType::FLOAT, true, "m/s²");
+    schema.addSignal("accel_y", ParamType::FLOAT, true, "m/s²");
+    schema.addSignal("accel_z", ParamType::FLOAT, true, "m/s²");
+    schema.addSignal("gyro_x", ParamType::FLOAT, true, "rad/s");
+    schema.addSignal("gyro_y", ParamType::FLOAT, true, "rad/s");
+    schema.addSignal("gyro_z", ParamType::FLOAT, true, "rad/s");
+    schema.addSignal("mag_x", ParamType::FLOAT, true, "µT");
+    schema.addSignal("mag_y", ParamType::FLOAT, true, "µT");
+    schema.addSignal("mag_z", ParamType::FLOAT, true, "µT");
+    schema.addSignal("temperature", ParamType::FLOAT, true, "°C");
     
     return schema;
 }

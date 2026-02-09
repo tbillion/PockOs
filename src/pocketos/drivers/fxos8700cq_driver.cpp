@@ -167,17 +167,17 @@ CapabilitySchema FXOS8700CQDriver::getSchema() const {
     CapabilitySchema schema;
     
     // Basic settings
-    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "fxos8700cq");
-    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, POCKETOS_FXOS8700CQ_TIER_NAME);
+    schema.addSetting("driver", ParamType::STRING, true, "fxos8700cq", "", "", "");
+    schema.addSetting("tier", ParamType::STRING, true, POCKETOS_FXOS8700CQ_TIER_NAME, "", "", "");
     
     // Output signals
-    schema.addSignal("accel_x", ParamType::FLOAT, false, "m/s²");
-    schema.addSignal("accel_y", ParamType::FLOAT, false, "m/s²");
-    schema.addSignal("accel_z", ParamType::FLOAT, false, "m/s²");
-    schema.addSignal("mag_x", ParamType::FLOAT, false, "µT");
-    schema.addSignal("mag_y", ParamType::FLOAT, false, "µT");
-    schema.addSignal("mag_z", ParamType::FLOAT, false, "µT");
-    schema.addSignal("temperature", ParamType::FLOAT, false, "°C");
+    schema.addSignal("accel_x", ParamType::FLOAT, true, "m/s²");
+    schema.addSignal("accel_y", ParamType::FLOAT, true, "m/s²");
+    schema.addSignal("accel_z", ParamType::FLOAT, true, "m/s²");
+    schema.addSignal("mag_x", ParamType::FLOAT, true, "µT");
+    schema.addSignal("mag_y", ParamType::FLOAT, true, "µT");
+    schema.addSignal("mag_z", ParamType::FLOAT, true, "µT");
+    schema.addSignal("temperature", ParamType::FLOAT, true, "°C");
     
     return schema;
 }

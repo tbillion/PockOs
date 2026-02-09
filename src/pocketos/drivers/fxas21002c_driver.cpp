@@ -134,14 +134,14 @@ CapabilitySchema FXAS21002CDriver::getSchema() const {
     CapabilitySchema schema;
     
     // Basic settings
-    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "fxas21002c");
-    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, POCKETOS_FXAS21002C_TIER_NAME);
+    schema.addSetting("driver", ParamType::STRING, true, "fxas21002c", "", "", "");
+    schema.addSetting("tier", ParamType::STRING, true, POCKETOS_FXAS21002C_TIER_NAME, "", "", "");
     
     // Output signals
-    schema.addSignal("gyro_x", ParamType::FLOAT, false, "rad/s");
-    schema.addSignal("gyro_y", ParamType::FLOAT, false, "rad/s");
-    schema.addSignal("gyro_z", ParamType::FLOAT, false, "rad/s");
-    schema.addSignal("temperature", ParamType::FLOAT, false, "°C");
+    schema.addSignal("gyro_x", ParamType::FLOAT, true, "rad/s");
+    schema.addSignal("gyro_y", ParamType::FLOAT, true, "rad/s");
+    schema.addSignal("gyro_z", ParamType::FLOAT, true, "rad/s");
+    schema.addSignal("temperature", ParamType::FLOAT, true, "°C");
     
     return schema;
 }
