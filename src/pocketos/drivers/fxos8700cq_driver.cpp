@@ -167,8 +167,8 @@ CapabilitySchema FXOS8700CQDriver::getSchema() const {
     CapabilitySchema schema;
     
     // Basic settings
-    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "");
-    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, "");
+    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "fxos8700cq");
+    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, POCKETOS_FXOS8700CQ_TIER_NAME);
     
     // Output signals
     schema.addSignal("accel_x", ParamType::FLOAT, false, "m/s²");

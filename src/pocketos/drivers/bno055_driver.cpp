@@ -226,8 +226,8 @@ CapabilitySchema BNO055Driver::getSchema() const {
     CapabilitySchema schema;
     
     // Basic settings
-    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "");
-    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, "");
+    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "bno055");
+    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, POCKETOS_BNO055_TIER_NAME);
     
     // Output signals
     schema.addSignal("accel_x", ParamType::FLOAT, false, "m/s²");
