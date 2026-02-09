@@ -118,9 +118,6 @@ const char* TransportBase::typeToString(Type type) {
         case Type::RS232: return "RS232";
         case Type::CAN: return "CAN";
         case Type::ETHERNET: return "ETHERNET";
-        case Type::MCP2515: return "MCP2515";
-        case Type::NRF24L01: return "NRF24L01";
-        case Type::LORAWAN: return "LORAWAN";
         case Type::RC_TRANSCEIVER: return "RC_TRANSCEIVER";
         // Tier 2
         case Type::WIFI: return "WIFI";
