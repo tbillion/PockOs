@@ -189,10 +189,6 @@ bool W5500Driver::identifyProbe(const String& endpoint) {
     return version == 0x04;
 }
 
-uint8_t W5500Driver::getSocketBlockBase(uint8_t socket) const {
-    return W5500_BSB_S0_REG + (socket * 0x20);
-}
-
 bool W5500Driver::readReg(uint8_t block, uint16_t addr, uint8_t* data, uint16_t len) {
     if (!initialized_) {
         return false;
