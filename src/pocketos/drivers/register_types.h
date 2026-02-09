@@ -18,6 +18,15 @@ enum class RegisterAccess {
 };
 
 /**
+ * Bus type (for register access routing)
+ */
+enum class BusType {
+    I2C = 0,
+    SPI = 1,
+    UNKNOWN = 255
+};
+
+/**
  * Register descriptor structure
  * 
  * This structure describes a single hardware register in a device.
@@ -98,6 +107,17 @@ public:
     static bool isWritable(RegisterAccess access) {
         return access == RegisterAccess::WO || 
                access == RegisterAccess::RW;
+    }
+    
+    /**
+     * Get bus type as string
+     */
+    static const char* busTypeToString(BusType type) {
+        switch (type) {
+            case BusType::I2C: return "I2C";
+            case BusType::SPI: return "SPI";
+            default: return "UNKNOWN";
+        }
     }
 };
 

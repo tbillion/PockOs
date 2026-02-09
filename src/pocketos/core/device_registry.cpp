@@ -270,7 +270,26 @@ String DeviceRegistry::getDeviceRegisters(int deviceId) {
     
     Device& dev = devices[idx];
     
-    // Check if this is a BME280 driver (only one with Tier 2 support currently)
+    // Try to cast to IRegisterAccess interface
+    IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
+    if (regAccess) {
+        size_t count;
+        const RegisterDesc* regs = regAccess->registers(count);
+        
+        if (regs && count > 0) {
+            String result = "";
+            for (size_t i = 0; i < count; i++) {
+                result += "0x" + String(regs[i].addr, HEX) + " ";
+                result += String(regs[i].name) + " ";
+                result += String(regs[i].width) + " ";
+                result += String(RegisterUtils::accessToString(regs[i].access)) + " ";
+                result += "0x" + String(regs[i].reset, HEX) + "\n";
+            }
+            return result;
+        }
+    }
+    
+    // Legacy: Check if this is a BME280 driver (for backward compatibility)
     if (dev.driverId == "bme280") {
         BME280Driver* bme = static_cast<BME280Driver*>(dev.driver);
         if (bme) {
@@ -302,7 +321,13 @@ bool DeviceRegistry::deviceRegRead(int deviceId, uint16_t reg, uint8_t* buf, siz
     
     Device& dev = devices[idx];
     
-    // Check if this is a BME280 driver
+    // Try to cast to IRegisterAccess interface
+    IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
+    if (regAccess) {
+        return regAccess->regRead(reg, buf, len);
+    }
+    
+    // Legacy: Check if this is a BME280 driver (for backward compatibility)
     if (dev.driverId == "bme280") {
         BME280Driver* bme = static_cast<BME280Driver*>(dev.driver);
         if (bme) {
@@ -323,7 +348,13 @@ bool DeviceRegistry::deviceRegWrite(int deviceId, uint16_t reg, const uint8_t* b
     
     Device& dev = devices[idx];
     
-    // Check if this is a BME280 driver
+    // Try to cast to IRegisterAccess interface
+    IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
+    if (regAccess) {
+        return regAccess->regWrite(reg, buf, len);
+    }
+    
+    // Legacy: Check if this is a BME280 driver (for backward compatibility)
     if (dev.driverId == "bme280") {
         BME280Driver* bme = static_cast<BME280Driver*>(dev.driver);
         if (bme) {
@@ -344,7 +375,13 @@ bool DeviceRegistry::deviceSupportsRegisters(int deviceId) {
     
     Device& dev = devices[idx];
     
-    // Currently only BME280 with Tier 2 supports registers
+    // Check if driver implements IRegisterAccess interface
+    IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
+    if (regAccess) {
+        return true;
+    }
+    
+    // Legacy: Check BME280 with Tier 2 (for backward compatibility)
 #if POCKETOS_BME280_ENABLE_REGISTER_ACCESS
     if (dev.driverId == "bme280") {
         return true;
