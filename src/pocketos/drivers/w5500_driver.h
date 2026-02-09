@@ -64,6 +64,14 @@ private:
         return W5500_BSB_S0_REG + (socket * 0x20);
     }
     
+    uint8_t getSocketTxBufBase(uint8_t socket) const {
+        return W5500_BSB_S0_TX_BUF + (socket * 0x20);
+    }
+    
+    uint8_t getSocketRxBufBase(uint8_t socket) const {
+        return W5500_BSB_S0_RX_BUF + (socket * 0x20);
+    }
+    
     // W5500-specific register access (3-byte addressing: control, addr_hi, addr_lo)
     bool readReg(uint8_t block, uint16_t addr, uint8_t* data, uint16_t len);
     bool writeReg(uint8_t block, uint16_t addr, const uint8_t* data, uint16_t len);
