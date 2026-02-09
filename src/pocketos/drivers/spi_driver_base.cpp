@@ -145,39 +145,69 @@ bool SPIDriverBase::parseEndpoint(const String& endpoint) {
 }
 
 bool SPIDriverBase::claimPins() {
+    // Track claimed pins for cleanup on failure
+    bool cs_claimed = false;
+    bool dc_claimed = false;
+    bool rst_claimed = false;
+    bool irq_claimed = false;
+    bool busy_claimed = false;
+    
     // Claim CS pin (required)
     if (!ResourceManager::claim(ResourceType::GPIO_PIN, pins_.cs, owner_id_)) {
         return false;
     }
+    cs_claimed = true;
     
-    // Claim optional pins
-    if (pins_.dc >= 0 && !ResourceManager::claim(ResourceType::GPIO_PIN, pins_.dc, owner_id_)) {
-        ResourceManager::release(ResourceType::GPIO_PIN, pins_.cs, owner_id_);
-        return false;
+    // Claim optional pins, track each successful claim
+    if (pins_.dc >= 0) {
+        if (!ResourceManager::claim(ResourceType::GPIO_PIN, pins_.dc, owner_id_)) {
+            goto cleanup;
+        }
+        dc_claimed = true;
     }
     
-    if (pins_.rst >= 0 && !ResourceManager::claim(ResourceType::GPIO_PIN, pins_.rst, owner_id_)) {
-        ResourceManager::release(ResourceType::GPIO_PIN, pins_.cs, owner_id_);
-        if (pins_.dc >= 0) ResourceManager::release(ResourceType::GPIO_PIN, pins_.dc, owner_id_);
-        return false;
+    if (pins_.rst >= 0) {
+        if (!ResourceManager::claim(ResourceType::GPIO_PIN, pins_.rst, owner_id_)) {
+            goto cleanup;
+        }
+        rst_claimed = true;
     }
     
-    if (pins_.irq >= 0 && !ResourceManager::claim(ResourceType::GPIO_PIN, pins_.irq, owner_id_)) {
-        ResourceManager::release(ResourceType::GPIO_PIN, pins_.cs, owner_id_);
-        if (pins_.dc >= 0) ResourceManager::release(ResourceType::GPIO_PIN, pins_.dc, owner_id_);
-        if (pins_.rst >= 0) ResourceManager::release(ResourceType::GPIO_PIN, pins_.rst, owner_id_);
-        return false;
+    if (pins_.irq >= 0) {
+        if (!ResourceManager::claim(ResourceType::GPIO_PIN, pins_.irq, owner_id_)) {
+            goto cleanup;
+        }
+        irq_claimed = true;
     }
     
-    if (pins_.busy >= 0 && !ResourceManager::claim(ResourceType::GPIO_PIN, pins_.busy, owner_id_)) {
-        ResourceManager::release(ResourceType::GPIO_PIN, pins_.cs, owner_id_);
-        if (pins_.dc >= 0) ResourceManager::release(ResourceType::GPIO_PIN, pins_.dc, owner_id_);
-        if (pins_.rst >= 0) ResourceManager::release(ResourceType::GPIO_PIN, pins_.rst, owner_id_);
-        if (pins_.irq >= 0) ResourceManager::release(ResourceType::GPIO_PIN, pins_.irq, owner_id_);
-        return false;
+    if (pins_.busy >= 0) {
+        if (!ResourceManager::claim(ResourceType::GPIO_PIN, pins_.busy, owner_id_)) {
+            goto cleanup;
+        }
+        busy_claimed = true;
     }
     
     return true;
+    
+cleanup:
+    // Release any successfully claimed pins
+    if (cs_claimed) {
+        ResourceManager::release(ResourceType::GPIO_PIN, pins_.cs, owner_id_);
+    }
+    if (dc_claimed) {
+        ResourceManager::release(ResourceType::GPIO_PIN, pins_.dc, owner_id_);
+    }
+    if (rst_claimed) {
+        ResourceManager::release(ResourceType::GPIO_PIN, pins_.rst, owner_id_);
+    }
+    if (irq_claimed) {
+        ResourceManager::release(ResourceType::GPIO_PIN, pins_.irq, owner_id_);
+    }
+    if (busy_claimed) {
+        ResourceManager::release(ResourceType::GPIO_PIN, pins_.busy, owner_id_);
+    }
+    
+    return false;
 }
 
 void SPIDriverBase::releasePins() {
