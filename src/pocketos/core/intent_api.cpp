@@ -74,6 +74,12 @@ IntentResponse IntentAPI::dispatch(const IntentRequest& request) {
         return handleFactoryReset(request);
     } else if (request.intent == "config.validate") {
         return handleConfigValidate(request);
+    } else if (request.intent == "reg.list") {
+        return handleRegList(request);
+    } else if (request.intent == "reg.read") {
+        return handleRegRead(request);
+    } else if (request.intent == "reg.write") {
+        return handleRegWrite(request);
     }
     
     return IntentResponse(IntentError::ERR_NOT_FOUND, "Unknown intent");
@@ -574,6 +580,56 @@ IntentResponse IntentAPI::handleConfigValidate(const IntentRequest& req) {
         resp.data += "errors=" + PCF1Config::getValidationErrors() + "\n";
         return resp;
     }
+}
+
+IntentResponse IntentAPI::handleRegList(const IntentRequest& req) {
+    // reg.list <device_id>
+    if (req.argCount < 1) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: reg.list <device_id>");
+    }
+    
+    int deviceId = req.args[0].toInt();
+    if (!DeviceRegistry::deviceExists(deviceId)) {
+        return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
+    }
+    
+    // Get the driver to check if it supports register access
+    // This requires accessing the device's driver - needs device registry enhancement
+    // For now, return ERR_UNSUPPORTED with clear message
+    return IntentResponse(IntentError::ERR_UNSUPPORTED, 
+        "Register access not yet implemented. Enable POCKETOS_DRIVER_TIER=2 and driver support.");
+}
+
+IntentResponse IntentAPI::handleRegRead(const IntentRequest& req) {
+    // reg.read <device_id> <reg|name> [len]
+    if (req.argCount < 2) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: reg.read <device_id> <reg|name> [len]");
+    }
+    
+    int deviceId = req.args[0].toInt();
+    if (!DeviceRegistry::deviceExists(deviceId)) {
+        return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
+    }
+    
+    // This will be fully implemented after BME280 upgrade
+    return IntentResponse(IntentError::ERR_UNSUPPORTED, 
+        "Register read not yet implemented. Enable POCKETOS_DRIVER_TIER=2 and driver support.");
+}
+
+IntentResponse IntentAPI::handleRegWrite(const IntentRequest& req) {
+    // reg.write <device_id> <reg|name> <value> [len]
+    if (req.argCount < 3) {
+        return IntentResponse(IntentError::ERR_BAD_ARGS, "Usage: reg.write <device_id> <reg|name> <value> [len]");
+    }
+    
+    int deviceId = req.args[0].toInt();
+    if (!DeviceRegistry::deviceExists(deviceId)) {
+        return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
+    }
+    
+    // This will be fully implemented after BME280 upgrade
+    return IntentResponse(IntentError::ERR_UNSUPPORTED, 
+        "Register write not yet implemented. Enable POCKETOS_DRIVER_TIER=2 and driver support.");
 }
 
 } // namespace PocketOS

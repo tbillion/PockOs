@@ -8,32 +8,46 @@
  * selection of driver feature sets to optimize for code size vs features.
  * 
  * Driver Tiers:
- * - Tier 1 (MINIMAL): Basic functionality only, minimal code size
- * - Tier 2 (STANDARD): Production-ready with error handling (default)
- * - Tier 3 (FULL): Complete feature set with all optimizations
+ * - Tier 0: Basic functionality only (minimum useful features)
+ * - Tier 1: Robust features (calibration, configuration, extra outputs)
+ * - Tier 2: Complete + exhaustive register access
  */
 
 // ============================================================================
-// GLOBAL DRIVER PACKAGE CONFIGURATION
+// GLOBAL DRIVER TIER CONFIGURATION
 // ============================================================================
 
 /**
- * POCKETOS_DRIVER_PACKAGE: Global driver tier setting
+ * POCKETOS_DRIVER_TIER: Global driver tier setting
  * 
- * 1 = MINIMAL   - Basic functionality, ~30-40% code size
- * 2 = STANDARD  - Production ready, ~70-80% code size (DEFAULT)
- * 3 = FULL      - Complete features, 100% code size
+ * 0 = TIER_0  - Basic functionality, minimum useful features
+ * 1 = TIER_1  - Robust features with configuration (DEFAULT)
+ * 2 = TIER_2  - Complete with exhaustive register access
  * 
- * Can be overridden via build flags: -DPOCKETOS_DRIVER_PACKAGE=1
+ * Can be overridden via build flags: -DPOCKETOS_DRIVER_TIER=2
  */
-#ifndef POCKETOS_DRIVER_PACKAGE
-#define POCKETOS_DRIVER_PACKAGE 2  // Default to STANDARD
+#ifndef POCKETOS_DRIVER_TIER
+#define POCKETOS_DRIVER_TIER 1  // Default to TIER_1
 #endif
 
 // Tier level definitions
-#define POCKETOS_TIER_MINIMAL  1
-#define POCKETOS_TIER_STANDARD 2
-#define POCKETOS_TIER_FULL     3
+#define POCKETOS_TIER_0  0
+#define POCKETOS_TIER_1  1
+#define POCKETOS_TIER_2  2
+
+// Legacy compatibility: map old PACKAGE to new TIER
+#ifdef POCKETOS_DRIVER_PACKAGE
+#if POCKETOS_DRIVER_PACKAGE == 1
+#undef POCKETOS_DRIVER_TIER
+#define POCKETOS_DRIVER_TIER 0
+#elif POCKETOS_DRIVER_PACKAGE == 2
+#undef POCKETOS_DRIVER_TIER
+#define POCKETOS_DRIVER_TIER 1
+#elif POCKETOS_DRIVER_PACKAGE == 3
+#undef POCKETOS_DRIVER_TIER
+#define POCKETOS_DRIVER_TIER 2
+#endif
+#endif
 
 // ============================================================================
 // PER-DRIVER TIER OVERRIDES
@@ -49,17 +63,22 @@
 
 // BME280 Driver Tier (Temperature/Humidity/Pressure sensor)
 #ifndef POCKETOS_DRIVER_TIER_BME280
-#define POCKETOS_DRIVER_TIER_BME280 POCKETOS_DRIVER_PACKAGE
+#define POCKETOS_DRIVER_TIER_BME280 POCKETOS_DRIVER_TIER
 #endif
 
 // GPIO Digital Output Driver Tier
 #ifndef POCKETOS_DRIVER_TIER_GPIO_DOUT
-#define POCKETOS_DRIVER_TIER_GPIO_DOUT POCKETOS_DRIVER_PACKAGE
+#define POCKETOS_DRIVER_TIER_GPIO_DOUT POCKETOS_DRIVER_TIER
+#endif
+
+// SHT31 Driver Tier (Temperature/Humidity sensor)
+#ifndef POCKETOS_DRIVER_TIER_SHT31
+#define POCKETOS_DRIVER_TIER_SHT31 POCKETOS_DRIVER_TIER
 #endif
 
 // Add more driver tier overrides as drivers are created
 // #ifndef POCKETOS_DRIVER_TIER_<DRIVER_NAME>
-// #define POCKETOS_DRIVER_TIER_<DRIVER_NAME> POCKETOS_DRIVER_PACKAGE
+// #define POCKETOS_DRIVER_TIER_<DRIVER_NAME> POCKETOS_DRIVER_TIER
 // #endif
 
 // ============================================================================
@@ -70,37 +89,35 @@
  * These macros make it easy to conditionally compile features based on tier.
  * Usage in driver code:
  * 
- * #if POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS
- *     // Full-tier only code
+ * #if POCKETOS_BME280_ENABLE_REGISTER_ACCESS
+ *     // Tier 2 only code
  * #endif
  */
 
 // BME280 Feature Flags
-#if POCKETOS_DRIVER_TIER_BME280 >= POCKETOS_TIER_MINIMAL
+// Tier 0: Basic read functionality
+#if POCKETOS_DRIVER_TIER_BME280 >= POCKETOS_TIER_0
 #define POCKETOS_BME280_ENABLE_BASIC_READ 1
 #else
 #define POCKETOS_BME280_ENABLE_BASIC_READ 0
 #endif
 
-#if POCKETOS_DRIVER_TIER_BME280 >= POCKETOS_TIER_STANDARD
+// Tier 1: Robust features (calibration, configuration, extra outputs)
+#if POCKETOS_DRIVER_TIER_BME280 >= POCKETOS_TIER_1
 #define POCKETOS_BME280_ENABLE_ERROR_HANDLING 1
 #define POCKETOS_BME280_ENABLE_LOGGING 1
 #define POCKETOS_BME280_ENABLE_CONFIGURATION 1
 #define POCKETOS_BME280_ENABLE_FULL_SCHEMA 1
-#else
-#define POCKETOS_BME280_ENABLE_ERROR_HANDLING 0
-#define POCKETOS_BME280_ENABLE_LOGGING 0
-#define POCKETOS_BME280_ENABLE_CONFIGURATION 0
-#define POCKETOS_BME280_ENABLE_FULL_SCHEMA 0
-#endif
-
-#if POCKETOS_DRIVER_TIER_BME280 >= POCKETOS_TIER_FULL
 #define POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS 1
 #define POCKETOS_BME280_ENABLE_FORCED_MODE 1
 #define POCKETOS_BME280_ENABLE_IIR_FILTER 1
 #define POCKETOS_BME280_ENABLE_STANDBY_CONFIG 1
 #define POCKETOS_BME280_ENABLE_OVERSAMPLING_CONFIG 1
 #else
+#define POCKETOS_BME280_ENABLE_ERROR_HANDLING 0
+#define POCKETOS_BME280_ENABLE_LOGGING 0
+#define POCKETOS_BME280_ENABLE_CONFIGURATION 0
+#define POCKETOS_BME280_ENABLE_FULL_SCHEMA 0
 #define POCKETOS_BME280_ENABLE_ADVANCED_DIAGNOSTICS 0
 #define POCKETOS_BME280_ENABLE_FORCED_MODE 0
 #define POCKETOS_BME280_ENABLE_IIR_FILTER 0
@@ -108,27 +125,49 @@
 #define POCKETOS_BME280_ENABLE_OVERSAMPLING_CONFIG 0
 #endif
 
+// Tier 2: Complete + exhaustive register access
+#if POCKETOS_DRIVER_TIER_BME280 >= POCKETOS_TIER_2
+#define POCKETOS_BME280_ENABLE_REGISTER_ACCESS 1
+#else
+#define POCKETOS_BME280_ENABLE_REGISTER_ACCESS 0
+#endif
+
 // GPIO DOUT Feature Flags
-#if POCKETOS_DRIVER_TIER_GPIO_DOUT >= POCKETOS_TIER_MINIMAL
+#if POCKETOS_DRIVER_TIER_GPIO_DOUT >= POCKETOS_TIER_0
 #define POCKETOS_GPIO_DOUT_ENABLE_BASIC 1
 #else
 #define POCKETOS_GPIO_DOUT_ENABLE_BASIC 0
 #endif
 
-#if POCKETOS_DRIVER_TIER_GPIO_DOUT >= POCKETOS_TIER_STANDARD
+#if POCKETOS_DRIVER_TIER_GPIO_DOUT >= POCKETOS_TIER_1
 #define POCKETOS_GPIO_DOUT_ENABLE_ERROR_HANDLING 1
 #define POCKETOS_GPIO_DOUT_ENABLE_LOGGING 1
-#else
-#define POCKETOS_GPIO_DOUT_ENABLE_ERROR_HANDLING 0
-#define POCKETOS_GPIO_DOUT_ENABLE_LOGGING 0
-#endif
-
-#if POCKETOS_DRIVER_TIER_GPIO_DOUT >= POCKETOS_TIER_FULL
 #define POCKETOS_GPIO_DOUT_ENABLE_PWM 1
 #define POCKETOS_GPIO_DOUT_ENABLE_BLINK 1
 #else
+#define POCKETOS_GPIO_DOUT_ENABLE_ERROR_HANDLING 0
+#define POCKETOS_GPIO_DOUT_ENABLE_LOGGING 0
 #define POCKETOS_GPIO_DOUT_ENABLE_PWM 0
 #define POCKETOS_GPIO_DOUT_ENABLE_BLINK 0
+#endif
+
+// SHT31 Feature Flags (Temperature/Humidity sensor)
+#if POCKETOS_DRIVER_TIER_SHT31 >= POCKETOS_TIER_0
+#define POCKETOS_SHT31_ENABLE_BASIC_READ 1
+#else
+#define POCKETOS_SHT31_ENABLE_BASIC_READ 0
+#endif
+
+#if POCKETOS_DRIVER_TIER_SHT31 >= POCKETOS_TIER_1
+#define POCKETOS_SHT31_ENABLE_ERROR_HANDLING 1
+#define POCKETOS_SHT31_ENABLE_LOGGING 1
+#define POCKETOS_SHT31_ENABLE_CONFIGURATION 1
+#define POCKETOS_SHT31_ENABLE_HEATER 1
+#else
+#define POCKETOS_SHT31_ENABLE_ERROR_HANDLING 0
+#define POCKETOS_SHT31_ENABLE_LOGGING 0
+#define POCKETOS_SHT31_ENABLE_CONFIGURATION 0
+#define POCKETOS_SHT31_ENABLE_HEATER 0
 #endif
 
 // ============================================================================
@@ -137,32 +176,37 @@
 
 // Helper macros to get tier name as string
 #define POCKETOS_TIER_NAME(tier) \
-    ((tier) == POCKETOS_TIER_MINIMAL ? "MINIMAL" : \
-     (tier) == POCKETOS_TIER_STANDARD ? "STANDARD" : \
-     (tier) == POCKETOS_TIER_FULL ? "FULL" : "UNKNOWN")
+    ((tier) == POCKETOS_TIER_0 ? "TIER_0" : \
+     (tier) == POCKETOS_TIER_1 ? "TIER_1" : \
+     (tier) == POCKETOS_TIER_2 ? "TIER_2" : "UNKNOWN")
 
-// Get current package tier name
-#define POCKETOS_PACKAGE_TIER_NAME POCKETOS_TIER_NAME(POCKETOS_DRIVER_PACKAGE)
+// Get current global tier name
+#define POCKETOS_GLOBAL_TIER_NAME POCKETOS_TIER_NAME(POCKETOS_DRIVER_TIER)
 
 // Get specific driver tier name
 #define POCKETOS_BME280_TIER_NAME POCKETOS_TIER_NAME(POCKETOS_DRIVER_TIER_BME280)
 #define POCKETOS_GPIO_DOUT_TIER_NAME POCKETOS_TIER_NAME(POCKETOS_DRIVER_TIER_GPIO_DOUT)
+#define POCKETOS_SHT31_TIER_NAME POCKETOS_TIER_NAME(POCKETOS_DRIVER_TIER_SHT31)
 
 // ============================================================================
 // VALIDATION
 // ============================================================================
 
 // Validate tier values are in range
-#if POCKETOS_DRIVER_PACKAGE < 1 || POCKETOS_DRIVER_PACKAGE > 3
-#error "POCKETOS_DRIVER_PACKAGE must be 1 (MINIMAL), 2 (STANDARD), or 3 (FULL)"
+#if POCKETOS_DRIVER_TIER < 0 || POCKETOS_DRIVER_TIER > 2
+#error "POCKETOS_DRIVER_TIER must be 0 (TIER_0), 1 (TIER_1), or 2 (TIER_2)"
 #endif
 
-#if POCKETOS_DRIVER_TIER_BME280 < 1 || POCKETOS_DRIVER_TIER_BME280 > 3
-#error "POCKETOS_DRIVER_TIER_BME280 must be 1, 2, or 3"
+#if POCKETOS_DRIVER_TIER_BME280 < 0 || POCKETOS_DRIVER_TIER_BME280 > 2
+#error "POCKETOS_DRIVER_TIER_BME280 must be 0, 1, or 2"
 #endif
 
-#if POCKETOS_DRIVER_TIER_GPIO_DOUT < 1 || POCKETOS_DRIVER_TIER_GPIO_DOUT > 3
-#error "POCKETOS_DRIVER_TIER_GPIO_DOUT must be 1, 2, or 3"
+#if POCKETOS_DRIVER_TIER_GPIO_DOUT < 0 || POCKETOS_DRIVER_TIER_GPIO_DOUT > 2
+#error "POCKETOS_DRIVER_TIER_GPIO_DOUT must be 0, 1, or 2"
+#endif
+
+#if POCKETOS_DRIVER_TIER_SHT31 < 0 || POCKETOS_DRIVER_TIER_SHT31 > 2
+#error "POCKETOS_DRIVER_TIER_SHT31 must be 0, 1, or 2"
 #endif
 
 #endif // POCKETOS_DRIVER_CONFIG_H

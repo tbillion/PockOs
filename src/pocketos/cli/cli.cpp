@@ -203,6 +203,36 @@ void CLI::parseCommand(const String& cmdLine, IntentRequest& request) {
         request.args[1] = tokens[2];  // interval
         request.args[2] = tokens[3];  // count
         request.argCount = 3;
+    } else if (cmd == "reg" && tokenCount > 1) {
+        if (tokens[1] == "list" && tokenCount > 2) {
+            // reg list <device_id>
+            request.intent = "reg.list";
+            request.args[0] = tokens[2];
+            request.argCount = 1;
+        } else if (tokens[1] == "read" && tokenCount > 3) {
+            // reg read <device_id> <reg|name> [len]
+            request.intent = "reg.read";
+            request.args[0] = tokens[2];
+            request.args[1] = tokens[3];
+            if (tokenCount > 4) {
+                request.args[2] = tokens[4];
+                request.argCount = 3;
+            } else {
+                request.argCount = 2;
+            }
+        } else if (tokens[1] == "write" && tokenCount > 4) {
+            // reg write <device_id> <reg|name> <value> [len]
+            request.intent = "reg.write";
+            request.args[0] = tokens[2];
+            request.args[1] = tokens[3];
+            request.args[2] = tokens[4];
+            if (tokenCount > 5) {
+                request.args[3] = tokens[5];
+                request.argCount = 4;
+            } else {
+                request.argCount = 3;
+            }
+        }
     }
 }
 
@@ -258,6 +288,11 @@ void CLI::printHelp() {
     Serial.println("  schema <device_id>             - Show device schema");
     Serial.println("  param get <dev_id> <param>     - Get parameter");
     Serial.println("  param set <dev_id> <param> <val> - Set parameter");
+    Serial.println();
+    Serial.println("Register Access (Tier 2 drivers only):");
+    Serial.println("  reg list <device_id>           - List all registers");
+    Serial.println("  reg read <dev_id> <reg|name> [len] - Read register (0xF4 or CTRL_MEAS)");
+    Serial.println("  reg write <dev_id> <reg|name> <val> [len] - Write register");
     Serial.println();
     Serial.println("Persistence & Config:");
     Serial.println("  persist save                   - Save configuration");
