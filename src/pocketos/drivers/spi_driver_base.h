@@ -62,8 +62,9 @@ public:
     bool readBusy() const;     // Read BUSY pin
     
     // DC pin control (for displays)
-    // Note: Most displays use LOW=command, HIGH=data convention
-    void setDC(bool isCommand);  // DC control (true=command/LOW, false=data/HIGH)
+    // Hardware convention: DC pin LOW=command, HIGH=data
+    // API: setDC(true) = command mode (DC LOW), setDC(false) = data mode (DC HIGH)
+    void setDC(bool isCommand);  // true=command (LOW), false=data (HIGH)
     void setDCCommand();         // Set DC to command mode (LOW)
     void setDCData();            // Set DC to data mode (HIGH)
     

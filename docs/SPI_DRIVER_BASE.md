@@ -84,12 +84,14 @@ setCS(true);   // Assert CS
 setCS(false);  // Release CS
 
 // DC control (for displays)
-// Most displays use LOW=command, HIGH=data convention
-setDC(true);        // Command mode (DC=LOW)
-setDC(false);       // Data mode (DC=HIGH)
-// Or use explicit named methods:
-setDCCommand();     // Command mode (DC=LOW)
-setDCData();        // Data mode (DC=HIGH)
+// Hardware: Most displays use DC LOW=command, HIGH=data
+// Boolean API: true=command (LOW), false=data (HIGH)
+setDC(true);        // Command mode (sets DC LOW)
+setDC(false);       // Data mode (sets DC HIGH)
+
+// Named methods for clarity (recommended):
+setDCCommand();     // Command mode (sets DC LOW)
+setDCData();        // Data mode (sets DC HIGH)
 
 // Reset control (active low)
 setRST(true);  // Assert reset

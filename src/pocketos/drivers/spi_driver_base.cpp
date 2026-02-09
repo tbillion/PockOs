@@ -121,7 +121,7 @@ bool SPIDriverBase::parseEndpoint(const String& endpoint) {
             String key = pair.substring(0, eqIdx);
             int value = pair.substring(eqIdx + 1).toInt();
             
-            key.toLowerCase();
+            key.toLowerCase();  // Modifies in place
             if (key == "cs") {
                 pins_.cs = value;
             } else if (key == "dc") {
@@ -133,6 +133,7 @@ bool SPIDriverBase::parseEndpoint(const String& endpoint) {
             } else if (key == "busy") {
                 pins_.busy = value;
             }
+        }
         }
         
         startIdx = commaIdx + 1;
