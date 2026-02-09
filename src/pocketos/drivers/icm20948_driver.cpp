@@ -173,18 +173,22 @@ bool ICM20948Driver::readMagnetometer(float& x, float& y, float& z) {
 
 CapabilitySchema ICM20948Driver::getSchema() const {
     CapabilitySchema schema;
-    schema.tier = POCKETOS_ICM20948_TIER_NAME;
     
-    schema.addOutput("accel_x", "number", "m/s²", "X-axis acceleration");
-    schema.addOutput("accel_y", "number", "m/s²", "Y-axis acceleration");
-    schema.addOutput("accel_z", "number", "m/s²", "Z-axis acceleration");
-    schema.addOutput("gyro_x", "number", "rad/s", "X-axis rotation rate");
-    schema.addOutput("gyro_y", "number", "rad/s", "Y-axis rotation rate");
-    schema.addOutput("gyro_z", "number", "rad/s", "Z-axis rotation rate");
-    schema.addOutput("mag_x", "number", "µT", "X-axis magnetic field");
-    schema.addOutput("mag_y", "number", "µT", "Y-axis magnetic field");
-    schema.addOutput("mag_z", "number", "µT", "Z-axis magnetic field");
-    schema.addOutput("temperature", "number", "°C", "Temperature");
+    // Basic settings
+    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "");
+    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, "");
+    
+    // Output signals
+    schema.addSignal("accel_x", ParamType::FLOAT, false, "m/s²");
+    schema.addSignal("accel_y", ParamType::FLOAT, false, "m/s²");
+    schema.addSignal("accel_z", ParamType::FLOAT, false, "m/s²");
+    schema.addSignal("gyro_x", ParamType::FLOAT, false, "rad/s");
+    schema.addSignal("gyro_y", ParamType::FLOAT, false, "rad/s");
+    schema.addSignal("gyro_z", ParamType::FLOAT, false, "rad/s");
+    schema.addSignal("mag_x", ParamType::FLOAT, false, "µT");
+    schema.addSignal("mag_y", ParamType::FLOAT, false, "µT");
+    schema.addSignal("mag_z", ParamType::FLOAT, false, "µT");
+    schema.addSignal("temperature", ParamType::FLOAT, false, "°C");
     
     return schema;
 }

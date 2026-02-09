@@ -224,25 +224,29 @@ BNO055Data BNO055Driver::readData() {
 
 CapabilitySchema BNO055Driver::getSchema() const {
     CapabilitySchema schema;
-    schema.tier = POCKETOS_BNO055_TIER_NAME;
     
-    schema.addOutput("accel_x", "number", "m/s²", "X-axis acceleration");
-    schema.addOutput("accel_y", "number", "m/s²", "Y-axis acceleration");
-    schema.addOutput("accel_z", "number", "m/s²", "Z-axis acceleration");
-    schema.addOutput("gyro_x", "number", "rad/s", "X-axis rotation rate");
-    schema.addOutput("gyro_y", "number", "rad/s", "Y-axis rotation rate");
-    schema.addOutput("gyro_z", "number", "rad/s", "Z-axis rotation rate");
-    schema.addOutput("mag_x", "number", "µT", "X-axis magnetic field");
-    schema.addOutput("mag_y", "number", "µT", "Y-axis magnetic field");
-    schema.addOutput("mag_z", "number", "µT", "Z-axis magnetic field");
-    schema.addOutput("euler_heading", "number", "°", "Euler heading angle");
-    schema.addOutput("euler_roll", "number", "°", "Euler roll angle");
-    schema.addOutput("euler_pitch", "number", "°", "Euler pitch angle");
-    schema.addOutput("quat_w", "number", "", "Quaternion W");
-    schema.addOutput("quat_x", "number", "", "Quaternion X");
-    schema.addOutput("quat_y", "number", "", "Quaternion Y");
-    schema.addOutput("quat_z", "number", "", "Quaternion Z");
-    schema.addOutput("temperature", "number", "°C", "Temperature");
+    // Basic settings
+    schema.addSetting("driver", ParamType::STRING, false, 0, 0, 0, "");
+    schema.addSetting("tier", ParamType::STRING, false, 0, 0, 0, "");
+    
+    // Output signals
+    schema.addSignal("accel_x", ParamType::FLOAT, false, "m/s²");
+    schema.addSignal("accel_y", ParamType::FLOAT, false, "m/s²");
+    schema.addSignal("accel_z", ParamType::FLOAT, false, "m/s²");
+    schema.addSignal("gyro_x", ParamType::FLOAT, false, "rad/s");
+    schema.addSignal("gyro_y", ParamType::FLOAT, false, "rad/s");
+    schema.addSignal("gyro_z", ParamType::FLOAT, false, "rad/s");
+    schema.addSignal("mag_x", ParamType::FLOAT, false, "µT");
+    schema.addSignal("mag_y", ParamType::FLOAT, false, "µT");
+    schema.addSignal("mag_z", ParamType::FLOAT, false, "µT");
+    schema.addSignal("euler_heading", ParamType::FLOAT, false, "°");
+    schema.addSignal("euler_roll", ParamType::FLOAT, false, "°");
+    schema.addSignal("euler_pitch", ParamType::FLOAT, false, "°");
+    schema.addSignal("quat_w", ParamType::FLOAT, false, "");
+    schema.addSignal("quat_x", ParamType::FLOAT, false, "");
+    schema.addSignal("quat_y", ParamType::FLOAT, false, "");
+    schema.addSignal("quat_z", ParamType::FLOAT, false, "");
+    schema.addSignal("temperature", ParamType::FLOAT, false, "°C");
     
     return schema;
 }
