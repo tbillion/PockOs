@@ -68,6 +68,12 @@ public:
     // Device status and health
     static String getDeviceStatus(int deviceId);
     
+    // Register access (Tier 2 drivers only)
+    static String getDeviceRegisters(int deviceId);
+    static bool deviceRegRead(int deviceId, uint16_t reg, uint8_t* buf, size_t len);
+    static bool deviceRegWrite(int deviceId, uint16_t reg, const uint8_t* buf, size_t len);
+    static bool deviceSupportsRegisters(int deviceId);
+    
     // Config export
     static String exportConfig();
     

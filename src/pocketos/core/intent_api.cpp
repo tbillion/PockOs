@@ -593,11 +593,19 @@ IntentResponse IntentAPI::handleRegList(const IntentRequest& req) {
         return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
     }
     
-    // Get the driver to check if it supports register access
-    // This requires accessing the device's driver - needs device registry enhancement
-    // For now, return ERR_UNSUPPORTED with clear message
-    return IntentResponse(IntentError::ERR_UNSUPPORTED, 
-        "Register access not yet implemented. Enable POCKETOS_DRIVER_TIER=2 and driver support.");
+    if (!DeviceRegistry::deviceSupportsRegisters(deviceId)) {
+        return IntentResponse(IntentError::ERR_UNSUPPORTED, 
+            "Device does not support register access. Enable POCKETOS_DRIVER_TIER=2 and use Tier 2 driver.");
+    }
+    
+    String regList = DeviceRegistry::getDeviceRegisters(deviceId);
+    if (regList.length() == 0) {
+        return IntentResponse(IntentError::ERR_INTERNAL, "Failed to retrieve register list");
+    }
+    
+    IntentResponse resp;
+    resp.data = regList;
+    return resp;
 }
 
 IntentResponse IntentAPI::handleRegRead(const IntentRequest& req) {
@@ -611,9 +619,52 @@ IntentResponse IntentAPI::handleRegRead(const IntentRequest& req) {
         return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
     }
     
-    // This will be fully implemented after BME280 upgrade
-    return IntentResponse(IntentError::ERR_UNSUPPORTED, 
-        "Register read not yet implemented. Enable POCKETOS_DRIVER_TIER=2 and driver support.");
+    if (!DeviceRegistry::deviceSupportsRegisters(deviceId)) {
+        return IntentResponse(IntentError::ERR_UNSUPPORTED, 
+            "Device does not support register access. Enable POCKETOS_DRIVER_TIER=2 and use Tier 2 driver.");
+    }
+    
+    // Parse register address (hex or decimal)
+    String regStr = req.args[1];
+    uint16_t regAddr;
+    
+    if (regStr.startsWith("0x") || regStr.startsWith("0X")) {
+        regAddr = (uint16_t)strtol(regStr.c_str() + 2, nullptr, 16);
+    } else {
+        // Try as decimal first
+        regAddr = (uint16_t)regStr.toInt();
+        // If it's 0 and not "0", might be a name - handle in driver layer
+        // For now, support hex/decimal addressing
+    }
+    
+    // Determine read length (default to 1)
+    size_t len = 1;
+    if (req.argCount >= 3) {
+        len = req.args[2].toInt();
+        if (len == 0 || len > 16) {
+            return IntentResponse(IntentError::ERR_BAD_ARGS, "Length must be 1-16");
+        }
+    }
+    
+    // Read the register(s)
+    uint8_t buf[16];
+    if (!DeviceRegistry::deviceRegRead(deviceId, regAddr, buf, len)) {
+        return IntentResponse(IntentError::ERR_IO, "Failed to read register");
+    }
+    
+    // Format response
+    IntentResponse resp;
+    resp.data = "register=0x" + String(regAddr, HEX) + "\n";
+    resp.data += "value=";
+    for (size_t i = 0; i < len; i++) {
+        if (i > 0) resp.data += ":";
+        if (buf[i] < 16) resp.data += "0";
+        resp.data += String(buf[i], HEX);
+    }
+    resp.data += "\n";
+    resp.data += "length=" + String(len) + "\n";
+    
+    return resp;
 }
 
 IntentResponse IntentAPI::handleRegWrite(const IntentRequest& req) {
@@ -627,9 +678,44 @@ IntentResponse IntentAPI::handleRegWrite(const IntentRequest& req) {
         return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
     }
     
-    // This will be fully implemented after BME280 upgrade
-    return IntentResponse(IntentError::ERR_UNSUPPORTED, 
-        "Register write not yet implemented. Enable POCKETOS_DRIVER_TIER=2 and driver support.");
+    if (!DeviceRegistry::deviceSupportsRegisters(deviceId)) {
+        return IntentResponse(IntentError::ERR_UNSUPPORTED, 
+            "Device does not support register access. Enable POCKETOS_DRIVER_TIER=2 and use Tier 2 driver.");
+    }
+    
+    // Parse register address
+    String regStr = req.args[1];
+    uint16_t regAddr;
+    
+    if (regStr.startsWith("0x") || regStr.startsWith("0X")) {
+        regAddr = (uint16_t)strtol(regStr.c_str() + 2, nullptr, 16);
+    } else {
+        regAddr = (uint16_t)regStr.toInt();
+    }
+    
+    // Parse value
+    String valueStr = req.args[2];
+    uint32_t value;
+    
+    if (valueStr.startsWith("0x") || valueStr.startsWith("0X")) {
+        value = (uint32_t)strtol(valueStr.c_str() + 2, nullptr, 16);
+    } else {
+        value = (uint32_t)valueStr.toInt();
+    }
+    
+    // For now, only support single byte writes
+    uint8_t buf[1];
+    buf[0] = (uint8_t)(value & 0xFF);
+    
+    // Write the register
+    if (!DeviceRegistry::deviceRegWrite(deviceId, regAddr, buf, 1)) {
+        return IntentResponse(IntentError::ERR_IO, "Failed to write register (may be read-only)");
+    }
+    
+    IntentResponse resp;
+    resp.data = "register=0x" + String(regAddr, HEX) + "\n";
+    resp.data += "value=0x" + String(buf[0], HEX) + "\n";
+    return resp;
 }
 
 } // namespace PocketOS
