@@ -134,8 +134,6 @@ bool SPIDriverBase::parseEndpoint(const String& endpoint) {
                 pins_.busy = value;
             }
         }
-        }
-        
         startIdx = commaIdx + 1;
     }
     

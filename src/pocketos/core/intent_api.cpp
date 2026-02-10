@@ -216,13 +216,19 @@ IntentResponse IntentAPI::handleSchemaGet(const IntentRequest& req) {
     }
     
     int deviceId = req.args[0].toInt();
-    String schema = DeviceRegistry::getDeviceSchema(deviceId);
-    if (schema.length() > 0) {
-        IntentResponse resp;
-        resp.data = schema;
-        return resp;
+    if (!DeviceRegistry::deviceExists(deviceId)) {
+        return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
     }
-    return IntentResponse(IntentError::ERR_NOT_FOUND, "Device not found");
+
+    String schema = DeviceRegistry::getDeviceSchema(deviceId);
+    if (DeviceRegistry::deviceSupportsRegisters(deviceId)) {
+        schema += "\n[registers]\n";
+        schema += DeviceRegistry::getDeviceRegisters(deviceId);
+    }
+
+    IntentResponse resp;
+    resp.data = schema;
+    return resp;
 }
 
 IntentResponse IntentAPI::handleLogTail(const IntentRequest& req) {

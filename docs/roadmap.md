@@ -1178,6 +1178,26 @@ D) Docs:
 ✅ Complete documentation
 ✅ Production-ready
 
+## 2026-02-10 01:40 — SPI Driver Pack kick-off
+
+**What was done:**
+- Auto-registered SPI buses/endpoints in EndpointRegistry.
+- Added SPI identification probes (MCP2515, NRF24L01+, W5500, ILI9341, ST7789).
+- Introduced IDriver/IRegisterAccess adapters for SPI starters (MCP2515, NRF24L01+, W5500, ST7789, ILI9341).
+- Added Tier2 MCP3008 SPI ADC driver with register-exposed channels.
+- Schema output now appends register maps for Tier2 drivers.
+
+**What remains:**
+- Expand skeleton coverage for remaining SPI devices with explicit ERR_UNSUPPORTED handling.
+- Finalize documentation (SPI_DRIVER_PACK.md) and CLI transcript proof.
+- Re-run PlatformIO build once network/toolchain access is available.
+
+**Blockers/Risks:**
+- PlatformIO toolchain download blocked by HTTPClientError (dl.platformio.org) in current environment.
+
+**Build status:**
+- `pio run -e esp32dev` → FAIL (HTTPClientError downloading espressif32/toolchain)
+
 ---
 
 ## 2026-02-09 00:23 — AI_Instructions.md Compliance Verification
