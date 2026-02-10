@@ -1,5 +1,6 @@
 #include "mcp3008_driver.h"
 #include "../core/logger.h"
+#include "spi_driver_pack_adapter.h"
 
 namespace PocketOS {
 
@@ -29,14 +30,7 @@ bool MCP3008Driver::setParam(const String& name, const String& value) {
 
 String MCP3008Driver::getParam(const String& name) {
     if (name == "endpoint") return endpoint_;
-    if (name == "tier") {
-        switch (POCKETOS_DRIVER_TIER_MCP3008) {
-            case 0: return "tier0";
-            case 1: return "tier1";
-            case 2: return "tier2";
-            default: return "tier?";
-        }
-    }
+    if (name == "tier") return formatTierName(POCKETOS_DRIVER_TIER_MCP3008);
     return "";
 }
 
@@ -47,12 +41,7 @@ CapabilitySchema MCP3008Driver::getSchema() {
     schema.addSetting("endpoint", ParamType::STRING, false);
     schema.settings[schema.settingCount - 1].units = endpoint_;
     schema.addSetting("tier", ParamType::STRING, false);
-    switch (POCKETOS_DRIVER_TIER_MCP3008) {
-        case 0: schema.settings[schema.settingCount - 1].units = "tier0"; break;
-        case 1: schema.settings[schema.settingCount - 1].units = "tier1"; break;
-        case 2: schema.settings[schema.settingCount - 1].units = "tier2"; break;
-        default: schema.settings[schema.settingCount - 1].units = "tier?"; break;
-    }
+    schema.settings[schema.settingCount - 1].units = formatTierName(POCKETOS_DRIVER_TIER_MCP3008);
     schema.addSignal("ch0", ParamType::FLOAT, false, "counts");
     schema.addSignal("ch1", ParamType::FLOAT, false, "counts");
     schema.addSignal("ch2", ParamType::FLOAT, false, "counts");

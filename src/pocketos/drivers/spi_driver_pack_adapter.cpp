@@ -76,7 +76,7 @@ bool MCP2515DeviceDriver::regWrite(uint16_t reg, const uint8_t* buf, size_t len)
 }
 
 bool NRF24DeviceDriver::setParam(const String& name, const String& value) {
-    Logger::warn("NRF24L01: unsupported param " + name);
+    Logger::warn("NRF24L01+: unsupported param " + name);
     return false;
 }
 
@@ -89,7 +89,7 @@ String NRF24DeviceDriver::getParam(const String& name) {
 
 CapabilitySchema NRF24DeviceDriver::getSchema() {
     CapabilitySchema schema;
-    addCommonSettings(schema, "nrf24l01+", endpoint_, POCKETOS_DRIVER_TIER_NRF24L01, "STATUS/CONFIG");
+    addCommonSettings(schema, "nrf24l01", endpoint_, POCKETOS_DRIVER_TIER_NRF24L01, "STATUS/CONFIG");
     schema.addCommand("reg.list", "");
     schema.addCommand("reg.read", "addr [len]");
     schema.addCommand("reg.write", "addr value");

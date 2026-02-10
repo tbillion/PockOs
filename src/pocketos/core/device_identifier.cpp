@@ -80,7 +80,7 @@ DeviceIdentification DeviceIdentifier::identifySPI(const String& endpoint) {
 
     if (NRF24L01Driver::identifyProbe(endpoint)) {
         DeviceIdentification id;
-        id.deviceClass = "nrf24l01+";
+        id.deviceClass = "nrf24l01";
         id.confidence = "medium";
         id.details = "STATUS/CONFIG probe succeeded";
         id.identified = true;
