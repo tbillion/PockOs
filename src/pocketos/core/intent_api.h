@@ -98,6 +98,9 @@ public:
     static IntentResponse handleDeviceStream(const IntentRequest& req);
     static IntentResponse handleFactoryReset(const IntentRequest& req);
     static IntentResponse handleConfigValidate(const IntentRequest& req);
+    static IntentResponse handleRegList(const IntentRequest& req);
+    static IntentResponse handleRegRead(const IntentRequest& req);
+    static IntentResponse handleRegWrite(const IntentRequest& req);
     
 private:
     static bool initialized;

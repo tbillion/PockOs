@@ -3,6 +3,9 @@
 #include "resource_manager.h"
 #include "endpoint_registry.h"
 #include "../drivers/gpio_dout_driver.h"
+#include "../drivers/bme280_driver.h"
+#include "../drivers/register_types.h"
+#include "../driver_config.h"
 
 namespace PocketOS {
 
@@ -256,6 +259,136 @@ String DeviceRegistry::exportConfig() {
     }
     
     return config;
+}
+
+// Register access methods (Tier 2 drivers only)
+String DeviceRegistry::getDeviceRegisters(int deviceId) {
+    int idx = findDevice(deviceId);
+    if (idx < 0) {
+        return "";
+    }
+    
+    Device& dev = devices[idx];
+    
+    // Try to cast to IRegisterAccess interface
+    IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
+    if (regAccess) {
+        size_t count;
+        const RegisterDesc* regs = regAccess->registers(count);
+        
+        if (regs && count > 0) {
+            String result = "";
+            for (size_t i = 0; i < count; i++) {
+                result += "0x" + String(regs[i].addr, HEX) + " ";
+                result += String(regs[i].name) + " ";
+                result += String(regs[i].width) + " ";
+                result += String(RegisterUtils::accessToString(regs[i].access)) + " ";
+                result += "0x" + String(regs[i].reset, HEX) + "\n";
+            }
+            return result;
+        }
+    }
+    
+    // Legacy: Check if this is a BME280 driver (for backward compatibility)
+    if (dev.driverId == "bme280") {
+        BME280Driver* bme = static_cast<BME280Driver*>(dev.driver);
+        if (bme) {
+#if POCKETOS_BME280_ENABLE_REGISTER_ACCESS
+            size_t count;
+            const RegisterDesc* regs = bme->registers(count);
+            
+            String result = "";
+            for (size_t i = 0; i < count; i++) {
+                result += "0x" + String(regs[i].addr, HEX) + " ";
+                result += String(regs[i].name) + " ";
+                result += String(regs[i].width) + " ";
+                result += String(RegisterUtils::accessToString(regs[i].access)) + " ";
+                result += "0x" + String(regs[i].reset, HEX) + "\n";
+            }
+            return result;
+#endif
+        }
+    }
+    
+    return "";
+}
+
+bool DeviceRegistry::deviceRegRead(int deviceId, uint16_t reg, uint8_t* buf, size_t len) {
+    int idx = findDevice(deviceId);
+    if (idx < 0) {
+        return false;
+    }
+    
+    Device& dev = devices[idx];
+    
+    // Try to cast to IRegisterAccess interface
+    IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
+    if (regAccess) {
+        return regAccess->regRead(reg, buf, len);
+    }
+    
+    // Legacy: Check if this is a BME280 driver (for backward compatibility)
+    if (dev.driverId == "bme280") {
+        BME280Driver* bme = static_cast<BME280Driver*>(dev.driver);
+        if (bme) {
+#if POCKETOS_BME280_ENABLE_REGISTER_ACCESS
+            return bme->regRead(reg, buf, len);
+#endif
+        }
+    }
+    
+    return false;
+}
+
+bool DeviceRegistry::deviceRegWrite(int deviceId, uint16_t reg, const uint8_t* buf, size_t len) {
+    int idx = findDevice(deviceId);
+    if (idx < 0) {
+        return false;
+    }
+    
+    Device& dev = devices[idx];
+    
+    // Try to cast to IRegisterAccess interface
+    IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
+    if (regAccess) {
+        return regAccess->regWrite(reg, buf, len);
+    }
+    
+    // Legacy: Check if this is a BME280 driver (for backward compatibility)
+    if (dev.driverId == "bme280") {
+        BME280Driver* bme = static_cast<BME280Driver*>(dev.driver);
+        if (bme) {
+#if POCKETOS_BME280_ENABLE_REGISTER_ACCESS
+            return bme->regWrite(reg, buf, len);
+#endif
+        }
+    }
+    
+    return false;
+}
+
+bool DeviceRegistry::deviceSupportsRegisters(int deviceId) {
+    int idx = findDevice(deviceId);
+    if (idx < 0) {
+        return false;
+    }
+    
+    Device& dev = devices[idx];
+    
+    // Check if driver implements IRegisterAccess interface
+    IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
+    if (regAccess) {
+        return true;
+    }
+    
+    // Legacy: Check BME280 with Tier 2 (for backward compatibility)
+#if POCKETOS_BME280_ENABLE_REGISTER_ACCESS
+    if (dev.driverId == "bme280") {
+        return true;
+    }
+#endif
+    
+    return false;
 }
 
 } // namespace PocketOS

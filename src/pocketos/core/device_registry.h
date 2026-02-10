@@ -14,6 +14,10 @@ enum class DeviceState {
     DISABLED
 };
 
+// Forward declarations
+class RegisterDesc;
+enum class BusType : uint8_t;
+
 // Forward declaration of base driver interface
 class IDriver {
 public:
@@ -23,6 +27,16 @@ public:
     virtual String getParam(const String& name) = 0;
     virtual CapabilitySchema getSchema() = 0;
     virtual void update() = 0;
+};
+
+// Interface for drivers that support register access (Tier 2)
+class IRegisterAccess {
+public:
+    virtual ~IRegisterAccess() {}
+    virtual const RegisterDesc* registers(size_t& count) const = 0;
+    virtual bool regRead(uint16_t reg, uint8_t* buf, size_t len) = 0;
+    virtual bool regWrite(uint16_t reg, const uint8_t* buf, size_t len) = 0;
+    virtual BusType getBusType() const = 0;
 };
 
 struct Device {
@@ -67,6 +81,12 @@ public:
     
     // Device status and health
     static String getDeviceStatus(int deviceId);
+    
+    // Register access (Tier 2 drivers only)
+    static String getDeviceRegisters(int deviceId);
+    static bool deviceRegRead(int deviceId, uint16_t reg, uint8_t* buf, size_t len);
+    static bool deviceRegWrite(int deviceId, uint16_t reg, const uint8_t* buf, size_t len);
+    static bool deviceSupportsRegisters(int deviceId);
     
     // Config export
     static String exportConfig();
