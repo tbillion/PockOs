@@ -121,8 +121,8 @@ static const RegisterDesc ST7735_REGISTERS[] = {
     RegisterDesc(0xDC, "RDID3", 2, RegisterAccess::RO, 0x00),
     RegisterDesc(0xDE, "NVCTR2", 2, RegisterAccess::RW, 0x00),
     RegisterDesc(0xDF, "NVCTR3", 2, RegisterAccess::RW, 0x00),
-    RegisterDesc(0xE0, "GMCTRP1", 17, RegisterAccess::WO, 0x00),
-    RegisterDesc(0xE1, "GMCTRN1", 17, RegisterAccess::WO, 0x00),
+    RegisterDesc(0xE0, "GMCTRP1", 16, RegisterAccess::WO, 0x00),
+    RegisterDesc(0xE1, "GMCTRN1", 16, RegisterAccess::WO, 0x00),
     RegisterDesc(0xFC, "GCV", 2, RegisterAccess::RW, 0x00),
 };
 
