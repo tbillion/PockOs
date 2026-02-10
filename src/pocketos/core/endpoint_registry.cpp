@@ -24,6 +24,13 @@ void EndpointRegistry::autoRegisterEndpoints() {
         String addr = "i2c" + String(i);
         registerEndpoint(addr, EndpointType::I2C_BUS, i);
     }
+
+    // Register SPI buses
+    int spiCount = HAL::getSPICount();
+    for (int i = 0; i < spiCount; i++) {
+        String addr = "spi" + String(i);
+        registerEndpoint(addr, EndpointType::SPI_BUS, i);
+    }
     
     // GPIO pins registered on-demand
     // ADC channels registered on-demand

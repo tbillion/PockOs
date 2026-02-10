@@ -2,6 +2,11 @@
 #include "hal.h"
 #include "logger.h"
 #include <Wire.h>
+#include "../drivers/mcp2515_driver.h"
+#include "../drivers/nrf24l01_driver.h"
+#include "../drivers/w5500_driver.h"
+#include "../drivers/ili9341_driver.h"
+#include "../drivers/st7789_driver.h"
 
 namespace PocketOS {
 
@@ -24,6 +29,10 @@ DeviceIdentification DeviceIdentifier::identifyEndpoint(const String& endpoint) 
             }
             return identifyI2C(address);
         }
+    }
+
+    if (endpoint.startsWith("spi")) {
+        return identifySPI(endpoint);
     }
     
     DeviceIdentification result;
@@ -52,6 +61,63 @@ DeviceIdentification DeviceIdentifier::identifyI2C(uint8_t address) {
     result.deviceClass = "unknown";
     result.confidence = "low";
     result.details = "Device present but not in identification database";
+    result.identified = false;
+    return result;
+}
+
+DeviceIdentification DeviceIdentifier::identifySPI(const String& endpoint) {
+    Logger::info("Identifying SPI device at " + endpoint);
+
+    // Attempt known SPI probes in priority order
+    if (MCP2515Driver::identifyProbe(endpoint)) {
+        DeviceIdentification id;
+        id.deviceClass = "mcp2515";
+        id.confidence = "high";
+        id.details = "CANSTAT/CANCTRL probe succeeded";
+        id.identified = true;
+        return id;
+    }
+
+    if (NRF24L01Driver::identifyProbe(endpoint)) {
+        DeviceIdentification id;
+        id.deviceClass = "nrf24l01+";
+        id.confidence = "medium";
+        id.details = "STATUS/CONFIG probe succeeded";
+        id.identified = true;
+        return id;
+    }
+
+    if (W5500Driver::identifyProbe(endpoint)) {
+        DeviceIdentification id;
+        id.deviceClass = "w5500";
+        id.confidence = "high";
+        id.details = "VERSIONR probe succeeded";
+        id.identified = true;
+        return id;
+    }
+
+    if (ILI9341Driver::identifyProbe(endpoint)) {
+        DeviceIdentification id;
+        id.deviceClass = "ili9341";
+        id.confidence = "medium";
+        id.details = "RDMODE/RDDID probe succeeded";
+        id.identified = true;
+        return id;
+    }
+
+    if (ST7789Driver::identifyProbe(endpoint)) {
+        DeviceIdentification id;
+        id.deviceClass = "st7789";
+        id.confidence = "medium";
+        id.details = "Read display ID probe succeeded";
+        id.identified = true;
+        return id;
+    }
+
+    DeviceIdentification result;
+    result.deviceClass = "unknown";
+    result.confidence = "low";
+    result.details = "SPI probes did not match known devices";
     result.identified = false;
     return result;
 }

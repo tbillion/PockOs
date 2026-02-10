@@ -87,6 +87,7 @@ public:
     static bool deviceRegRead(int deviceId, uint16_t reg, uint8_t* buf, size_t len);
     static bool deviceRegWrite(int deviceId, uint16_t reg, const uint8_t* buf, size_t len);
     static bool deviceSupportsRegisters(int deviceId);
+    static Device* getDevice(int deviceId);
     
     // Config export
     static String exportConfig();

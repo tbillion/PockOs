@@ -5,6 +5,8 @@
 #include "../drivers/gpio_dout_driver.h"
 #include "../drivers/bme280_driver.h"
 #include "../drivers/register_types.h"
+#include "../drivers/spi_driver_pack_adapter.h"
+#include "../drivers/mcp3008_driver.h"
 #include "../driver_config.h"
 
 namespace PocketOS {
@@ -30,6 +32,13 @@ int DeviceRegistry::bindDevice(const String& driverId, const String& endpoint) {
         if (endpoint.startsWith("gpio.dout.")) {
             int pin = endpoint.substring(10).toInt();
             EndpointRegistry::registerEndpoint(endpoint, EndpointType::GPIO_DOUT, pin);
+        } else if (endpoint.startsWith("spi")) {
+            int colon = endpoint.indexOf(':');
+            if (colon > 0) {
+                String bus = endpoint.substring(0, colon);
+                int busId = bus.substring(3).toInt();
+                EndpointRegistry::registerEndpoint(endpoint, EndpointType::SPI_DEVICE, busId);
+            }
         } else {
             Logger::error("Endpoint not found");
             return -1;
@@ -152,6 +161,14 @@ DeviceState DeviceRegistry::getDeviceState(int deviceId) {
     return DeviceState::FAULT;
 }
 
+Device* DeviceRegistry::getDevice(int deviceId) {
+    int idx = findDevice(deviceId);
+    if (idx >= 0) {
+        return &devices[idx];
+    }
+    return nullptr;
+}
+
 bool DeviceRegistry::setDeviceParam(int deviceId, const String& paramName, const String& value) {
     int idx = findDevice(deviceId);
     if (idx < 0 || !devices[idx].driver) {
@@ -210,6 +227,24 @@ int DeviceRegistry::findFreeSlot() {
 IDriver* DeviceRegistry::createDriver(const String& driverId, const String& endpoint) {
     if (driverId == "gpio.dout") {
         return new GPIODoutDriver(endpoint);
+    }
+    if (driverId == "mcp2515") {
+        return new MCP2515DeviceDriver(endpoint);
+    }
+    if (driverId == "nrf24l01") {
+        return new NRF24DeviceDriver(endpoint);
+    }
+    if (driverId == "w5500") {
+        return new W5500DeviceDriver(endpoint);
+    }
+    if (driverId == "st7789") {
+        return new ST7789DeviceDriver(endpoint);
+    }
+    if (driverId == "ili9341") {
+        return new ILI9341DeviceDriver(endpoint);
+    }
+    if (driverId == "mcp3008") {
+        return new MCP3008Driver(endpoint);
     }
     // Add more drivers here as needed
     return nullptr;
@@ -378,7 +413,9 @@ bool DeviceRegistry::deviceSupportsRegisters(int deviceId) {
     // Check if driver implements IRegisterAccess interface
     IRegisterAccess* regAccess = dynamic_cast<IRegisterAccess*>(dev.driver);
     if (regAccess) {
-        return true;
+        size_t count = 0;
+        const RegisterDesc* regs = regAccess->registers(count);
+        return regs != nullptr && count > 0;
     }
     
     // Legacy: Check BME280 with Tier 2 (for backward compatibility)

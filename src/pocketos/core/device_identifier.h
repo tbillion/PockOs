@@ -29,6 +29,7 @@ public:
 private:
     // Specific device identification functions
     static DeviceIdentification identifyBME280(uint8_t address);
+    static DeviceIdentification identifySPI(const String& endpoint);
     
     // Helper: Read I2C register
     static bool readI2CRegister(uint8_t address, uint8_t reg, uint8_t* value);
