@@ -8,6 +8,7 @@
 #include "ili9341_driver.h"
 #include "st7789_driver.h"
 #include "spi_driver_base.h"
+#include "register_types.h"
 
 namespace PocketOS {
 
@@ -121,6 +122,24 @@ private:
     ILI9341Driver driver_;
     String endpoint_;
 };
+
+class UnsupportedSPIDriver : public IDriver {
+public:
+    UnsupportedSPIDriver(const String& id, const String& endpoint)
+        : id_(id), endpoint_(endpoint) {}
+
+    bool init() override { return true; }
+    bool setParam(const String& name, const String& value) override;
+    String getParam(const String& name) override;
+    CapabilitySchema getSchema() override;
+    void update() override {}
+
+private:
+    String id_;
+    String endpoint_;
+};
+
+bool isUnsupportedSPIId(const String& id);
 
 } // namespace PocketOS
 

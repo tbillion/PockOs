@@ -284,4 +284,42 @@ bool ILI9341DeviceDriver::regWrite(uint16_t reg, const uint8_t* buf, size_t len)
 #endif
 }
 
+bool UnsupportedSPIDriver::setParam(const String& name, const String& value) {
+    Logger::warn(id_ + ": unsupported param " + name + "=" + value);
+    return false;
+}
+
+String UnsupportedSPIDriver::getParam(const String& name) {
+    if (name == "endpoint") return endpoint_;
+    if (name == "tier") return "disabled";
+    return "";
+}
+
+CapabilitySchema UnsupportedSPIDriver::getSchema() {
+    CapabilitySchema schema;
+    schema.addSetting("driver", ParamType::STRING, false);
+    schema.settings[schema.settingCount - 1].units = id_;
+    schema.addSetting("endpoint", ParamType::STRING, false);
+    schema.settings[schema.settingCount - 1].units = endpoint_;
+    schema.addSetting("status", ParamType::STRING, false);
+    schema.settings[schema.settingCount - 1].units = "ERR_UNSUPPORTED: enable Tier or driver";
+    return schema;
+}
+
+bool isUnsupportedSPIId(const String& id) {
+    static const char* UNSUPPORTED_IDS[] = {
+        "st7735", "st7796", "ili9486", "ili9488", "hx8357", "gc9a01a", "ra8875",
+        "ssd1306.spi", "ssd1327.spi", "ssd1351", "w25qxx", "gd25qxx", "at25dfxxx",
+        "at45dbxxx", "fm25vxx", "ads1118.spi", "ads1220", "ads1248", "ads1256",
+        "ads1262", "dac855x", "mcp492x", "icm20948.spi", "lis3dh.spi", "ssd1675",
+        "ssd1680", "uc8151", "il0373", "tlc5947"
+    };
+    for (size_t i = 0; i < sizeof(UNSUPPORTED_IDS)/sizeof(UNSUPPORTED_IDS[0]); i++) {
+        if (id == UNSUPPORTED_IDS[i]) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace PocketOS

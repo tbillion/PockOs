@@ -246,6 +246,9 @@ IDriver* DeviceRegistry::createDriver(const String& driverId, const String& endp
     if (driverId == "mcp3008") {
         return new MCP3008Driver(endpoint);
     }
+    if (isUnsupportedSPIId(driverId)) {
+        return new UnsupportedSPIDriver(driverId, endpoint);
+    }
     // Add more drivers here as needed
     return nullptr;
 }

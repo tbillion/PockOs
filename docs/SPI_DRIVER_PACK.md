@@ -9,6 +9,7 @@ This pack converts the SPI device list into PocketOS-compliant drivers with tier
 - **st7789** — TFT display controller — Tier follows `POCKETOS_DRIVER_TIER_ST7789`
 - **ili9341** — TFT display controller — Tier follows `POCKETOS_DRIVER_TIER_ILI9341`
 - **mcp3008** — SPI ADC (channels exposed as registers 0-7) — Tier follows `POCKETOS_DRIVER_TIER_MCP3008`
+- Skeleton-only (return `ERR_UNSUPPORTED` until enabled): st7735, st7796, ili9486/ili9488, hx8357, gc9a01a, ra8875, spi SSD13xx family, W25Qxx/GD25Qxx/AT25DF/AT45/FRAM, ADS12xx/ADS125x/ADS1262, DAC855x/MCP492x, IC sensors in SPI mode (ICM20948, LIS3DH), epaper controllers (SSD1675/SSD1680/UC8151/IL0373), TLC5947.
 
 ## Endpoint Requirements / Examples
 - CAN: `spi0:cs=5,irq=4`
